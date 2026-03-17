@@ -1,0 +1,14 @@
+-- Create main database
+CREATE DATABASE NBA_ANALYTICS;
+
+-- Use the database
+USE DATABASE NBA_ANALYTICS;
+
+-- Create schemas for each layer
+CREATE SCHEMA RAW;
+CREATE SCHEMA STAGING;
+CREATE SCHEMA INTERMEDIATE;
+CREATE SCHEMA MARTS;
+
+-- Verify schemas were created
+SHOW SCHEMAS;
