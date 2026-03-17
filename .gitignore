@@ -1,1 +1,35 @@
-/venv/
+# Credentials and secrets
+.env
+profiles.yml
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# dbt
+target/
+dbt_packages/
+logs/
+dbt.log
+
+# Airflow
+airflow/logs/
+airflow.db
+airflow.cfg
+unittests.cfg
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+*.log
+
