@@ -1,0 +1,20 @@
+version: 2
+
+sources:
+  - name: raw
+    description: Raw data loaded from NBA API
+    database: NBA_ANALYTICS
+    schema: RAW
+
+    tables:
+      - name: raw_player_game_logs
+        description: Player box scores from PlayerGameLogs endpoint
+
+      - name: raw_team_game_results
+        description: Team game results from LeagueGameFinder endpoint
+
+      - name: raw_player_info
+        description: Player biographical data from CommonPlayerInfo endpoint
+
+      - name: raw_team_rosters
+        description: Team roster snapshots from CommonTeamRoster endpoint
