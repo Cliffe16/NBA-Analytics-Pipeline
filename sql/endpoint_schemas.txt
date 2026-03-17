@@ -1,0 +1,103 @@
+PlayerGameLogs Endpoint
+--------------------------------------------------
+
+Columns: ['SEASON_YEAR', 'PLAYER_ID', 'PLAYER_NAME', 'NICKNAME', 'TEAM_ID', 'TEAM_ABBREVIATION', 'TEAM_NAME', 'GAME_ID', 'GAME_DATE', 'MATCHUP', 'WL', 'MIN', 'FGM', 'FGA', 'FG_PCT', 'FG3M', 'FG3A', 'FG3_PCT', 'FTM', 'FTA', 'FT_PCT', 'OREB', 'DREB', 'REB', 'AST', 'TOV', 'STL', 'BLK', 'BLKA', 'PF', 'PFD', 'PTS', 'PLUS_MINUS', 'NBA_FANTASY_PTS', 'DD2', 'TD3', 'WNBA_FANTASY_PTS', 'GP_RANK', 'W_RANK', 'L_RANK', 'W_PCT_RANK', 'MIN_RANK', 'FGM_RANK', 'FGA_RANK', 'FG_PCT_RANK', 'FG3M_RANK', 'FG3A_RANK', 'FG3_PCT_RANK', 'FTM_RANK', 'FTA_RANK', 'FT_PCT_RANK', 'OREB_RANK', 'DREB_RANK', 'REB_RANK', 'AST_RANK', 'TOV_RANK', 'STL_RANK', 'BLK_RANK', 'BLKA_RANK', 'PF_RANK', 'PFD_RANK', 'PTS_RANK', 'PLUS_MINUS_RANK', 'NBA_FANTASY_PTS_RANK', 'DD2_RANK', 'TD3_RANK', 'WNBA_FANTASY_PTS_RANK', 'AVAILABLE_FLAG', 'MIN_SEC', 'TEAM_COUNT']
+
+Sample:
+  SEASON_YEAR  PLAYER_ID      PLAYER_NAME  ... AVAILABLE_FLAG  MIN_SEC TEAM_COUNT
+0     2024-25     201935     James Harden  ...              1    48:24          1
+1     2024-25    1630162  Anthony Edwards  ...              1    40:15          1
+2     2024-25    1626192  Pat Connaughton  ...              1    43:34          1
+
+[3 rows x 70 columns]
+
+Data types:
+SEASON_YEAR                str
+PLAYER_ID                int64
+PLAYER_NAME                str
+NICKNAME                   str
+TEAM_ID                  int64
+                         ...  
+TD3_RANK                 int64
+WNBA_FANTASY_PTS_RANK    int64
+AVAILABLE_FLAG           int64
+MIN_SEC                    str
+TEAM_COUNT               int64
+Length: 70, dtype: object
+CommonPLayerInfo Endploint
+--------------------------------------------------
+
+Columns returned: ['PERSON_ID', 'FIRST_NAME', 'LAST_NAME', 'DISPLAY_FIRST_LAST', 'DISPLAY_LAST_COMMA_FIRST', 'DISPLAY_FI_LAST', 'PLAYER_SLUG', 'BIRTHDATE', 'SCHOOL', 'COUNTRY', 'LAST_AFFILIATION', 'HEIGHT', 'WEIGHT', 'SEASON_EXP', 'JERSEY', 'POSITION', 'ROSTERSTATUS', 'GAMES_PLAYED_CURRENT_SEASON_FLAG', 'TEAM_ID', 'TEAM_NAME', 'TEAM_ABBREVIATION', 'TEAM_CODE', 'TEAM_CITY', 'PLAYERCODE', 'FROM_YEAR', 'TO_YEAR', 'DLEAGUE_FLAG', 'NBA_FLAG', 'GAMES_PLAYED_FLAG', 'DRAFT_YEAR', 'DRAFT_ROUND', 'DRAFT_NUMBER', 'GREATEST_75_FLAG']
+
+Sample:
+   PERSON_ID FIRST_NAME LAST_NAME  ... DRAFT_ROUND DRAFT_NUMBER GREATEST_75_FLAG
+0       1000    Shandon  Anderson  ...           2           54                N
+
+[1 rows x 33 columns]
+
+Data types:
+PERSON_ID                           int64
+FIRST_NAME                            str
+LAST_NAME                             str
+DISPLAY_FIRST_LAST                    str
+DISPLAY_LAST_COMMA_FIRST              str
+DISPLAY_FI_LAST                       str
+PLAYER_SLUG                           str
+BIRTHDATE                             str
+SCHOOL                                str
+COUNTRY                               str
+LAST_AFFILIATION                      str
+HEIGHT                                str
+WEIGHT                                str
+SEASON_EXP                          int64
+JERSEY                                str
+POSITION                              str
+ROSTERSTATUS                          str
+GAMES_PLAYED_CURRENT_SEASON_FLAG      str
+TEAM_ID                             int64
+TEAM_NAME                             str
+TEAM_ABBREVIATION                     str
+TEAM_CODE                             str
+TEAM_CITY                             str
+PLAYERCODE                            str
+FROM_YEAR                           int64
+TO_YEAR                             int64
+DLEAGUE_FLAG                          str
+NBA_FLAG                              str
+GAMES_PLAYED_FLAG                     str
+DRAFT_YEAR                            str
+DRAFT_ROUND                           str
+DRAFT_NUMBER                          str
+GREATEST_75_FLAG                      str
+dtype: object
+CommonTeamRoster Endpoint
+--------------------------------------------------
+
+Columns returned: ['TeamID', 'SEASON', 'LeagueID', 'PLAYER', 'NICKNAME', 'PLAYER_SLUG', 'NUM', 'POSITION', 'HEIGHT', 'WEIGHT', 'BIRTH_DATE', 'AGE', 'EXP', 'SCHOOL', 'PLAYER_ID', 'HOW_ACQUIRED']
+
+Sample:
+Empty DataFrame
+Columns: [TeamID, SEASON, LeagueID, PLAYER, NICKNAME, PLAYER_SLUG, NUM, POSITION, HEIGHT, WEIGHT, BIRTH_DATE, AGE, EXP, SCHOOL, PLAYER_ID, HOW_ACQUIRED]
+Index: []
+
+Data types:
+TeamID          object
+SEASON          object
+LeagueID        object
+PLAYER          object
+NICKNAME        object
+PLAYER_SLUG     object
+NUM             object
+POSITION        object
+HEIGHT          object
+WEIGHT          object
+BIRTH_DATE      object
+AGE             object
+EXP             object
+SCHOOL          object
+PLAYER_ID       object
+HOW_ACQUIRED    object
+dtype: object
+
+--------------------------------------------------
+Endpoints verified
