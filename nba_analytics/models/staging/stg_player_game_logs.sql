@@ -14,25 +14,25 @@ cleaned AS(
 		TEAM_ID::INTEGER AS team_id,
 		TEAM_ABBREVIATION::VARCHAR AS team_abbreviation,
 		TEAM_NAME::VARCHAR AS team_name,
-		MATCHUP::VARCHAR AS matchup
+		MATCHUP::VARCHAR AS matchup,
 		-- Result Flag
 		CASE
 			WHEN WL = 'W' THEN TRUE
 			WHEN WL = 'L' THEN FALSE
 			ELSE NULL
-		END AS result,
+		END AS is_win,
 		-- Minutes played
-		COALESCE(MIN, 0):INTEGER AS minutes_played,
+		COALESCE(MIN, 0)::INTEGER AS minutes_played,
 		-- Shooting stats
 		COALESCE(FGM, 0)::INTEGER AS field_goals_made,
 		COALESCE(FGA, 0)::INTEGER AS field_goals_attempted,
 		FG_PCT::FLOAT AS field_goals_pct,  -- no coalesce to preserve 'undefined' or NULL, else it means, all shots attempted were missed
-		COALESCE(FG3M)::INTEGER AS three_pointers_made,
-		COALESCE(FG3A)::INTEGER AS three_pointers_attempted,
-		FG3_PCT::FLOAT AS thrre_point_pct,
+		COALESCE(FG3M, 0)::INTEGER AS three_pointers_made,
+		COALESCE(FG3A, 0)::INTEGER AS three_pointers_attempted,
+		FG3_PCT::FLOAT AS three_point_pct,
 		COALESCE(FTM, 0)::INTEGER AS free_throws_made,
 		COALESCE(FTA, 0)::INTEGER AS free_throws_attempted,
-		FT_PCT::FLOAT AS free_throw_pct
+		FT_PCT::FLOAT AS free_throw_pct,
 		-- Counting stats
 		COALESCE(OREB, 0)::INTEGER AS offensive_rebounds,
 		COALESCE(DREB, 0)::INTEGER AS defensive_rebounds,
@@ -50,7 +50,7 @@ cleaned AS(
 	WHERE GAME_ID IS NOT NULL
 		AND PLAYER_ID IS NOT NULL
 ),
--- Remove duplicates
+-- Add row_num to identify duplicates
 deduped AS(
 	SELECT *,
 		ROW_NUMBER() OVER(
@@ -59,7 +59,7 @@ deduped AS(
 			) AS row_num
 	FROM cleaned
 )
-
+-- Select most recent records
 SELECT * EXCLUDE row_num
 FROM deduped
 WHERE row_num = 1
