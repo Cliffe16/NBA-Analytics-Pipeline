@@ -3,6 +3,7 @@ import logging
 import snowflake.connector
 from snowflake.connector.pandas_tools import write_pandas
 from dotenv import load_dotenv
+from extraction import config
 
 load_dotenv()
 
@@ -14,12 +15,12 @@ def get_snowflake_conn():
 	"""Establishes connection to Snowflake"""
 	logger.info("Establishing connection to Snowflake...")
 	return snowflake.connector.connect(
-		user=os.getenv('USER'),
-        	password=os.getenv('PASS'),
-        	account=os.getenv('SF_ACC'),
-        	warehouse=getenv('WAREHOUSE'),
-        	database=getenv('SF_DB'),
-        	schema=getenv('SCHEMA')
+		    user=config.DB_USER,
+        	password=config.DB_PASSWORD,
+        	account=config.DB_ACCOUNT,
+        	warehouse=config.WAREHOUSE,
+        	database=config.DB,
+        	schema=config.DB_SCHEMA
 		)
 
 def db_load(df, table_name, conn):
