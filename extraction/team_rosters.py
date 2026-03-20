@@ -6,10 +6,8 @@ from nba_api.stats.endpoints import commonteamroster
 from nba_api.stats.static import teams
 from extraction.utils import get_snowflake_conn, db_load
 import logging
-from dotenv import load_dotenv
 from extraction import config
 
-load_dotenv()
 logger = logging.getLogger(__name__)
 
 def extract_team_rosters():

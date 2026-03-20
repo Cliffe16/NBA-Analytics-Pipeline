@@ -2,10 +2,7 @@ import os
 import logging
 import snowflake.connector
 from snowflake.connector.pandas_tools import write_pandas
-from dotenv import load_dotenv
 from extraction import config
-
-load_dotenv()
 
 # Set-up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

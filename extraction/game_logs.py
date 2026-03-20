@@ -3,10 +3,8 @@ import sys
 import logging
 from nba_api.stats.endpoints import playergamelogs, leaguegamefinder
 from extraction.utils import get_snowflake_conn, db_load
-from dotenv import load_dotenv
 from extraction import config
 
-load_dotenv()
 logger = logging.getLogger(__name__)
 
 def extract_stats():

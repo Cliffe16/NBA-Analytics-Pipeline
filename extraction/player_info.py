@@ -5,9 +5,7 @@ import pandas as pd
 from nba_api.stats.endpoints import commonplayerinfo
 from extraction.utils import get_snowflake_conn, db_load
 from extraction import config
-from dotenv import load_dotenv
 
-load_dotenv()
 logger = logging.getLogger(__name__)
 
 def extract_player_info():
