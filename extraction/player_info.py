@@ -11,12 +11,13 @@ logger = logging.getLogger(__name__)
 def extract_player_info():
     """Extracts players' biographical information"""
     try:
-        logger_info("Fetching current active players...")
-        cur = conn.cursor
+        conn = get_snowflake_conn()
+        logger.info("Fetching current active players...")
+        cur = conn.cursor()
 
         # Fetch players who've been in a roster this season
         cur.execute("""
-            SELECT DISTINCT PLAYER_ID FROM (
+            SELECT DISTINCT PLAYER_ID FROM(
                 -- Get anyone who has been on a roster this season
                 SELECT PLAYER_ID 
                 FROM NBA_ANALYTICS.RAW.RAW_TEAM_ROSTERS 
@@ -29,7 +30,7 @@ def extract_player_info():
             )
             WHERE PLAYER_ID IS NOT NULL
         """)
-        active_player_ids = [row[0] for row in cur.fectchall()]
+        active_player_ids = [row[0] for row in cur.fetchall()]
         
         logger.info(f"Extracting biographical info for {len(active_player_ids)} active players...")
         player_info_frames = []
@@ -47,7 +48,7 @@ def extract_player_info():
             db_load(player_info_df, config.PLAYER_INFO_TABLE, conn)
 
     except Exception as e:
-        logger.error(f"Error extractingplayer info: {str(e)}")
+        logger.error(f"Error extracting player info: {str(e)}")
         raise
     finally:
         conn.close()
