@@ -44,8 +44,6 @@ cleaned AS(
 		COALESCE(PF, 0)::INTEGER AS personal_fouls,
 		COALESCE(PTS, 0)::INTEGER AS points,
 		PLUS_MINUS::INTEGER AS plus_minus,
-		--Metadata
-		loaded_at
 	FROM source
 	WHERE GAME_ID IS NOT NULL
 		AND PLAYER_ID IS NOT NULL
@@ -55,7 +53,7 @@ deduped AS(
 	SELECT *,
 		ROW_NUMBER() OVER(
 			PARTITION BY game_id, player_id
-			ORDER BY loaded_at DESC
+			ORDER BY game_date DESC
 			) AS row_num
 	FROM cleaned
 )
