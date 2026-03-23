@@ -1,0 +1,46 @@
+version: 2
+
+models:
+  - name: dim_game
+    description: "Dimension table for NBA games"
+    columns:
+      - name: game_key
+        tests:
+          - unique
+          - not_null
+      - name: season_stage
+        tests:
+          - accepted_values:
+              values: ['Regular Season', 'Playoffs', 'Preseason', 'Play_in']
+      - name: game_date
+        tests:
+          - not_null
+          - valid_season_date
+  - name: fact_game_stats
+    description: "Fact table for team performance per game"
+    columns:
+      - name: fact_key
+        tests:
+          - unique
+          - not_null
+      - name: team_key
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_team')
+              field: team_key
+      - name: game_key
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_game')
+              field: game_key
+  - name: fact_player_stats
+    description: "Fact table for player performance per game"
+    columns:
+      - name: minutes_played
+        tests:
+          - is_positive
+      - name: total_rebounds
+        tests:
+          - is_positive        

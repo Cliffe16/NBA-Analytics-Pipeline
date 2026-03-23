@@ -1,0 +1,35 @@
+version: 2
+
+models:  
+  - name: stg_player_game_logs
+    description: "Cleans player box score from the NBA API"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:        # A single player can only have one record per game
+            - game_id
+            - player_id
+    columns:
+      - name: game_id
+        tests:
+          - not_null
+      - name: player_id
+        tests:
+          - not_null
+      - name: minutes_played
+        tests:
+          - not_null
+  - name: stg_team_rosters  
+    description: "Cleans team rosters"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:        # One row for a single player on a specific team on a specific date
+            - player_id
+            - team_id
+            - snapshot_date
+    columns:
+      - name: player_id
+        tests:
+          - not_null
+      - name: team_id
+        tests:
+          - not_null
