@@ -8,12 +8,8 @@ WITH games AS(
 		game_date,
 		season,
 		team_id,
-		CASE 
-			WHEN matchup LIKE '%vs.%' THEN 'HOME'
-			WHEN matchup LIKE '%@%' THEN 'AWAY'
-			ELSE NULL
-		END AS home_away_flag
-	FROM {{ ref('stg_player_game_logs') }}
+		home_away AS home_away_flag
+	FROM {{ ref('stg_team_game_results') }}
 ),
 teams AS(
 	SELECT
@@ -26,6 +22,13 @@ teams AS(
 	LEFT JOIN {{ ref('dim_team') }} t
 		ON g.team_id = t.team_id
 	GROUP BY g.game_id, g.game_date, g.season
+        -- ADD THIS: Only keep games where both sides of the matchup exist
+        HAVING MAX(CASE 
+                        WHEN g.home_away_flag = 'HOME' THEN t.team_key 
+                    END) IS NOT NULL
+            AND MAX(CASE 
+                        WHEN g.home_away_flag = 'AWAY' THEN t.team_key 
+                    END) IS NOT NULL
 ),
 surrogate_key AS(
 	SELECT 

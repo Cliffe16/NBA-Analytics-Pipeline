@@ -41,10 +41,13 @@ changes_flagged AS(
 -- Keep rows where team changed
 team_change_events AS(
 	SELECT
-		player_id,
+		        player_id,
                 player_name,
                 team_id,
-                snapshot_date AS effective_start_date,
+                CASE
+                    WHEN previous_team_id IS NULL THEN '1990-01-01'::DATE
+                    ELSE snapshot_date
+                END AS effective_start_date,
                 position,
                 jersey_number
 	FROM changes_flagged

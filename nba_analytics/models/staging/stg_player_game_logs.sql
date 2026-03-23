@@ -7,7 +7,9 @@ cleaned AS(
 	SELECT
 		-- IDs
 		GAME_ID::VARCHAR AS game_id,
-		TRY_TO_DATE(SUBSTR(GAME_DATE, 1, 10), 'MON DD, YYYY') AS game_date,
+        COALESCE(
+            TRY_TO_DATE(SUBSTR(GAME_DATE, 1, 10), 'YYYY-MM-DD'),
+            TRY_CAST(GAME_DATE AS DATE)) AS game_date,
 		SEASON_YEAR::VARCHAR AS season,
 		PLAYER_ID::INTEGER AS player_id,
 		PLAYER_NAME::VARCHAR AS player_name,
