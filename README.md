@@ -121,8 +121,10 @@ sudo systemctl start nba-extraction
 * **Extraction** is executed on a local edge node(my personal Ubuntu laptop) running a custom FastAPI worker.
 * **Communication** between the Azure orchestrator and the local extraction node is secured via a **Tailscale WireGuard Mesh VPN**, completely bypassing the public internet, NAT routers and the Akamai WAF.
 
-## Key Technical Learnings
+## Key Technical Lessons
 **Distributed Systems:** Designed and debugged communication between cloud infrastructure and on-premise hardware using private mesh networking.
+
+**Advanced Dimensionla Modelling:** Implemented SCD Type 2 logic using window functions(`LAG`, `LEAD`) to accurately track player team histories over time.
 
 **API Rate Management:** Implemented robust error handling, dynamic timeouts and request throttling to maintain stable connections with heavily fortified enterprise APIs.
 
