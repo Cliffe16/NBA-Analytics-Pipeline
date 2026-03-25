@@ -11,9 +11,10 @@
 This project is an end-to-end, automated ELT (Extract, Load, Transform) pipeline designed to extract comprehensive player and game statistics from the official NBA API, load the raw data into a Snowflake data warehouse and transform it into a dimensional model for analytics.
 
 ## System Architecture
-
+**Pipeline Architecture**
 ![Architecture Diagram](docs/pipeline_diagram.png) 
 
+**Data Model**
 ![Data Model Diagram](docs/data_model_diagram.png)
 
 ### The Tech Stack
@@ -26,10 +27,10 @@ This project is an end-to-end, automated ELT (Extract, Load, Transform) pipeline
 ## Repository Structure
 ```text
 NBA-Analytics-Pipeline/
-├── airflow/                             # Cloud Orchestration
+├── airflow/                             # Orchestration
 │   └── dags/
 │       ├── config.py
-│       └── nba_analytics_pipeline.py    # Main Airflow DAG defining the ELT flow
+│       └── nba_analytics_pipeline.py    # Airflow DAG defining the ELT flow
 ├── docs/                                # Project documentation & images
 │   ├── data_model_diagram.png
 │   └── pipeline_diagram.png
@@ -46,14 +47,14 @@ NBA-Analytics-Pipeline/
 │   │   ├── staging/                     # Base views on top of RAW Snowflake tables
 │   │   ├── intermediate/                # Joins and business logic
 │   │   └── marts/                       # Materialized dimensional models
-│   └── tests/                           # Custom data quality tests
+│   └── tests/                           # Custom dbt data quality tests
 ├── sql/                                 # Snowflake setup & test scripts
 │   ├── snowflake_database_schema.sql
 │   ├── snowflake_raw_setup.sql
 │   └── snowflake_warehouse.sql
 ├── test/                                # API Verification scripts
 │   └── verify_api.py
-├── api.py                               # FastAPI switchboard for remote triggering
+├── api.py                               # FastAPI script for remote triggering
 ├── Dockerfile                           # Custom Airflow image with Cosmos dependencies
 ├── requirements.txt
 └── README.md
@@ -73,7 +74,7 @@ NBA-Analytics-Pipeline/
 
     Edge Node: Local machine (Ubuntu) for extraction.
 
-    Acconts: Tailscale (free tier), Snowflake.
+    Accounts: Tailscale (free tier), Snowflake.
 
 ### Cloud Orchestrator (Azure VM)
 The Airflow environment is containerized. To spin up the orchestrator:
@@ -83,7 +84,7 @@ cd NBA-Analytics-Pipeline
 docker compose up -d
 ```
 
-### Airflow Connnecions
+### Airflow Connections
 Configure these in the Airflow UI:
     `snowflake_dbt`: Snowflake credentials with the target schema, account and user specified for Astronomer-Cosmos
     `tailscale_api`: HTTP connection pointing to the local worker node's Tailscale IP
@@ -112,13 +113,13 @@ sudo systemctl daemon-reload
 sudo systemctl enable nba-extraction
 sudo systemctl start nba-extraction
 ```
+# Key Challnges
+**Challenge:** The official NBA API(`stats.nba.com`) utilizes a strict Akamai Web Application Firewall(WAF) that actively blocks and blacklists traffic originating from major cloud data centres. Standard cloud-hosted extraction scripts fail instantly with HTTP 403 or Timeout errors.
 
-**The Engineering Challenge:** The official NBA API(`stats.nba.com`) utilizes a strict Akamai Web Application Firewall(WAF) that actively blocks and blacklists traffic originating fro>
-
-**The Architectural Solution:** Rather than relying on unreliable public proxies or expensive commercial residential proxy networks, this pipeline implements a **Hybrid Extraction Arc>
+**Solution:** Rather than relying on unreliable public proxies or expensive commercial residential proxy networks, this pipeline implements a **Hybrid Extraction Architecture**
 * **Orchestration** is handled in the cloud via Apache Airflow hosted on an Azure Virtual Machine.
 * **Extraction** is executed on a local edge node(my personal Ubuntu laptop) running a custom FastAPI worker.
-* **Communication** between the Azure orchestrator and the local extraction node is secured via a **Tailscale WireGuard Mesh VPN**, completely bypassing the public internet, NAT route>
+* **Communication** between the Azure orchestrator and the local extraction node is secured via a **Tailscale WireGuard Mesh VPN**, completely bypassing the public internet, NAT routers and the Akamai WAF.
 
 ## Key Technical Learnings
 **Distributed Systems:** Designed and debugged communication between cloud infrastructure and on-premise hardware using private mesh networking.
@@ -126,3 +127,38 @@ sudo systemctl start nba-extraction
 **API Rate Management:** Implemented robust error handling, dynamic timeouts and request throttling to maintain stable connections with heavily fortified enterprise APIs.
 
 **Modern ELT Orchestration:** Utilized Astronomer Cosmos to treat dbt models as independent tasks rather than a single grouped tasks within Airflow DAGs, ensuring strict dependency management between extraction success and transformation execution.
+
+# Troubleshooting & Known Issues
+
+Operating a hybrid cloud-to-edge architecture with strict APIs introduces unique edge cases. Here are common pitfalls and their implemented resolutions:
+
+* **Tailscale Connection Refused (Port 80 vs 8000):** If Airflow returns a `404 Not Found` HTML page from Apache, the `SimpleHttpOperator` probably knocked on default Port 80 instead of the FastAPI worker port 8000. 
+  * *Fix:* Ensure the Airflow connection is configured with the correct port in the UI and the host explicitly includes the port(e.g., `http://100.x.x.x:8000`).
+* **systemd Worker Crashing (Status 203/EXEC):** If the Ubuntu edge worker fails to start or gets stuck in a restart loop, systemd cannot locate the `uvicorn` executable. 
+  * *Fix:* Provide the absolute path to the virtual environment's `uvicorn` binary and the absolute path to the project folder in the `[Service]` block.
+* **NBA API Rate Limiting (Timeout 500 Errors):** The `stats.nba.com` API strictly throttles rapid requests, particularly on the `CommonPlayerInfo` endpoint. 
+  * *Fix:* The extraction scripts enforce a `time.sleep(1)` delay between loop iterations and explicitly set `timeout=120` in the `nba_api` call.
+* **LeagueGameFinder Unreliable Response Times:** Verification scripts (`test/verify_api.py`) revealed this specific endpoint frequently hangs. 
+  * *Fix:* Relies on Airflow's built-in task retries and extended timeouts to eventually secure the payload without failing the DAG.
+* **Astronomer Cosmos & Airflow 2.10 Conflicts:** Dependency conflicts can break DAG parsing when integrating dbt with Airflow. 
+  * *Fix:* Pinned Airflow to version `2.10.0` and utilized strict constraint files during the Docker image build and module installations.
+* **Missing dbt Schema/User (Profile Target Error):** Cosmos dynamically generates `profiles.yml`. If dbt fails with `'schema' is a required property` or `'user' is a required property`.
+  * *Fix:* Inject the target Snowflake schema (e.g., `PUBLIC` or `MARTS`) directly into the Airflow `snowflake_dbt` connection via the UI.
+* **Data Integrity & Transformation Quirks:**
+  * *Null Dimension Keys:* Missing opponent matchups caused null `home_key` joins. Fixed by adding a strict `HAVING` clause in `dim_game.sql` to enforce both sides of the matchup exist.
+  * *Date Parsing Errors:* NBA API date strings occasionally change formatting. Fixed by implementing `COALESCE(TRY_TO_DATE(SUBSTR(GAME_DATE, 1, 10)...)` in staging models to safely extract standard dates.
+
+## License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+## Data Dictionary (Core Models)
+
+The `MARTS` schema exposes the following dimensional models for BI consumption and downstream analytics:
+
+* **`fact_player_stats`:** Grain is one row per player per game. Contains advanced metrics(True Shooting Percentage, Game Score(GmSc)) and boolean flags for season-high performances.
+* **`fact_game_stats`:** Grain is one row per team per game. Used for team win/loss tracking, point differentials and aggregate shooting percentages.
+* **`dim_player`:** Utilizes Slowly Changing Dimension(SCD Type 2) logic to track player biographical data, physical attributes and player team history(trades/transfers) over time.
+* **`dim_team`:** Static attributes for all 30 NBA franchises.
+* **`dim_game`:** Schedule, season stage(Regular/Playoffs) and matchup details.
+* **`dim_date`:** Standard date dimension for time-series and seasonal analysis.
