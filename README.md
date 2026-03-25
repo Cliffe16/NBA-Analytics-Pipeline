@@ -12,10 +12,15 @@ This project is an end-to-end, automated ELT (Extract, Load, Transform) pipeline
 
 ## System Architecture
 **Pipeline Architecture**
+
 ![Architecture Diagram](docs/pipeline_diagram.png) 
 
+---
+
 **Data Model**
+
 ![Data Model Diagram](docs/data_model_diagram.png)
+
 
 ### The Tech Stack
 * **Orchestration:** Apache Airflow (Dockerized on Azure VM)
@@ -62,11 +67,17 @@ NBA-Analytics-Pipeline/
 ## Pipeline Execution Flow
 
 1. **Scheduled Trigger:** Airflow, running on the Azure VM, triggers the daily `nba_analytics_pipeline` DAG.
+
 2. **Secure Remote Control:** Airflow utilizes a `SimpleHttpOperator` to send an HTTP POST request across the Tailscale private network (`100.x.x.x:8000`) to the local FastAPI worker.
+
 3. **WAF Bypass & Extraction:** The local Ubuntu worker receives the command and initiates the Python extraction scripts (`game_logs.py`, `player_info.py`, `team_rosters.py`). Because the traffic originates from a residential ISP, the Akamai WAF permits the connection. The scripts utilize rate-limiting safeguards (`time.sleep` and extended timeouts) to prevent API throttling.
+
 4. **Direct Data Load:** The local worker formats the JSON responses into Pandas DataFrames and pushes the raw tables directly into the `RAW` database in Snowflake.
+
 5. **Success Signal:** The FastAPI worker returns an `HTTP 200 OK` status to Airflow via the secure VPN tunnel.
+
 6. **Data Transformation:** Upon receiving the success signal, Airflow initiates dbt's `transform_nba_data` task group. Astronomer Cosmos dynamically compiles and executes the dbt SQL models directly inside Snowflake, transforming the raw tables into clean, materialized dimensional models ready for BI consumption.
+
 
 ## Setup & Installation
 **Prerequisites**
@@ -76,6 +87,7 @@ NBA-Analytics-Pipeline/
 
     * Accounts: Tailscale (free tier), Snowflake.
 
+
 ### Cloud Orchestrator (Azure VM)
 The Airflow environment is containerized. To spin up the orchestrator:
 ```bash
@@ -83,6 +95,7 @@ git clone [https://github.com/Cliffe16/NBA-Analytics-Pipeline.git](https://githu
 cd NBA-Analytics-Pipeline
 docker compose up -d
 ```
+
 
 ### Airflow Connections
 Configure these in the Airflow UI:
