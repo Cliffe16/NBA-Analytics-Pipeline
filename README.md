@@ -8,18 +8,13 @@
 ![Azure](https://img.shields.io/badge/Microsoft_Azure-Cloud_Host-0089D6?style=for-the-badge&logo=microsoft-azure&logoColor=white)
 
 ## Project Overview
-This project is an end-to-end, automated ELT (Extract, Load, Transform) pipeline designed to extract comprehensive player and game statistics from the official NBA API, load the raw data into a Snowflake data warehouse, and transform it into a dimensional model for analytics.
-
-**The Engineering Challenge:** The official NBA API(`stats.nba.com`) utilizes a strict Akamai Web Application Firewall(WAF) that actively blocks and blacklists traffic originating from major cloud data centers. Standard cloud-hosted extraction scripts fail instantly with HTTP 403 or Timeout errors.
-
-**The Architectural Solution:** Rather than relying on unreliable public proxies or expensive commercial residential proxy networks, this pipeline implements a **Hybrid Extraction Architecture**. 
-* **Orchestration** is handled in the cloud via Apache Airflow hosted on an Azure Virtual Machine.
-* **Extraction** is executed on a local edge node(my personal Ubuntu laptop) running a custom FastAPI worker.
-* **Communication** between the Azure orchestrator and the local extraction node is secured via a **Tailscale WireGuard Mesh VPN**, completely bypassing the public internet, NAT routers and the Akamai WAF.
+This project is an end-to-end, automated ELT (Extract, Load, Transform) pipeline designed to extract comprehensive player and game statistics from the official NBA API, load the raw data into a Snowflake data warehouse and transform it into a dimensional model for analytics.
 
 ## System Architecture
 
-![Architecture Diagram](docs/architecture_diagram.png) *(Note: Add your diagram image to a docs folder and link it here)*
+![Architecture Diagram](docs/pipeline_diagram.png) 
+
+![Data Model Diagram](docs/data_model_diagram.png)
 
 ### The Tech Stack
 * **Orchestration:** Apache Airflow (Dockerized on Azure VM)
@@ -117,6 +112,13 @@ sudo systemctl daemon-reload
 sudo systemctl enable nba-extraction
 sudo systemctl start nba-extraction
 ```
+
+**The Engineering Challenge:** The official NBA API(`stats.nba.com`) utilizes a strict Akamai Web Application Firewall(WAF) that actively blocks and blacklists traffic originating fro>
+
+**The Architectural Solution:** Rather than relying on unreliable public proxies or expensive commercial residential proxy networks, this pipeline implements a **Hybrid Extraction Arc>
+* **Orchestration** is handled in the cloud via Apache Airflow hosted on an Azure Virtual Machine.
+* **Extraction** is executed on a local edge node(my personal Ubuntu laptop) running a custom FastAPI worker.
+* **Communication** between the Azure orchestrator and the local extraction node is secured via a **Tailscale WireGuard Mesh VPN**, completely bypassing the public internet, NAT route>
 
 ## Key Technical Learnings
 **Distributed Systems:** Designed and debugged communication between cloud infrastructure and on-premise hardware using private mesh networking.
