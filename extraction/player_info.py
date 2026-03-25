@@ -40,12 +40,15 @@ def extract_player_info():
             if count & 50 == 0:
                 logger.info(f"Processed {count}/{len(active_player_ids)} players...")
             
-            info = commonplayerinfo.CommonPlayerInfo(player_id=player_id)
+            info = commonplayerinfo.CommonPlayerInfo(
+                player_id=player_id,
+                timeout=120)
             player_info_frames.append(info.get_data_frames()[0])
 
         if player_info_frames:
             player_info_df = pd.concat(player_info_frames, ignore_index=True)
             db_load(player_info_df, config.PLAYER_INFO_TABLE, conn)
+        time.sleep(1)
 
     except Exception as e:
         logger.error(f"Error extracting player info: {str(e)}")

@@ -1,8 +1,9 @@
 from fastapi import  FastAPI, HTTPException
 import logging
-from extraction import extract_stats, extract_team_rosters, extract_player_info
+from extraction import game_logs, team_rosters, player_info
+import sys
 
-app = FastAPI()
+app = FastAPI(title="NBA Local Extraction API")
 logging.basicConfig(level=logging.info)
 logger = logging.getLogger(__name__)
 
@@ -10,8 +11,8 @@ logger = logging.getLogger(__name__)
 def run_game_logs():
     try:
         logger.info("Player/Game stats exrtaction started...")
-        extract_stats()
-        return{"status": "success", "task": "game_lofs", "message": "Player/Game stats successfully extracted and loaded to database"}
+        game_logs.extract_stats()
+        return{"status": "success", "task": "game_logs", "message": "Player/Game stats successfully extracted and loaded to database"}
     except Exception as e:
         logger.error(f"PLayer/Game stats extraction process failed: str{(e)}")
         raise HTTPException(status_code=500, detail=str(e))
