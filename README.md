@@ -70,11 +70,11 @@ NBA-Analytics-Pipeline/
 
 ## Setup & Installation
 **Prerequisites**
-    Cloud: Azure Virtual Machine (Ubuntu) with Docker installed.
+    * Cloud: Azure Virtual Machine (Ubuntu) with Docker installed.
 
-    Edge Node: Local machine (Ubuntu) for extraction.
+    * Edge Node: Local machine (Ubuntu) for extraction.
 
-    Accounts: Tailscale (free tier), Snowflake.
+    * Accounts: Tailscale (free tier), Snowflake.
 
 ### Cloud Orchestrator (Azure VM)
 The Airflow environment is containerized. To spin up the orchestrator:
@@ -128,7 +128,7 @@ sudo systemctl start nba-extraction
 
 **Modern ELT Orchestration:** Utilized Astronomer Cosmos to treat dbt models as independent tasks rather than a single grouped tasks within Airflow DAGs, ensuring strict dependency management between extraction success and transformation execution.
 
-# Troubleshooting & Known Issues
+## Troubleshooting & Known Issues
 
 Operating a hybrid cloud-to-edge architecture with strict APIs introduces unique edge cases. Here are common pitfalls and their implemented resolutions:
 
@@ -148,10 +148,6 @@ Operating a hybrid cloud-to-edge architecture with strict APIs introduces unique
   * *Null Dimension Keys:* Missing opponent matchups caused null `home_key` joins. Fixed by adding a strict `HAVING` clause in `dim_game.sql` to enforce both sides of the matchup exist.
   * *Date Parsing Errors:* NBA API date strings occasionally change formatting. Fixed by implementing `COALESCE(TRY_TO_DATE(SUBSTR(GAME_DATE, 1, 10)...)` in staging models to safely extract standard dates.
 
-## License
-
-Distributed under the MIT License. See `LICENSE` for more information.
-
 ## Data Dictionary (Core Models)
 
 The `MARTS` schema exposes the following dimensional models for BI consumption and downstream analytics:
@@ -162,3 +158,7 @@ The `MARTS` schema exposes the following dimensional models for BI consumption a
 * **`dim_team`:** Static attributes for all 30 NBA franchises.
 * **`dim_game`:** Schedule, season stage(Regular/Playoffs) and matchup details.
 * **`dim_date`:** Standard date dimension for time-series and seasonal analysis.
+
+## License
+
+Distributed under the MIT License. See `LICENSE` for more information.
