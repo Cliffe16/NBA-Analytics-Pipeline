@@ -1,6 +1,5 @@
 from airflow import DAG
-from airflow.operators.python import PythonOperator
-from airflow.operators.bash import BashOperator
+from airflow.providers.http.operators.http import SimpleHttpOperator
 from cosmos import DbtTaskGroup, ProjectConfig, ProfileConfig, ExecutionConfig
 from cosmos.profiles import SnowflakeUserPasswordProfileMapping
 from datetime import datetime, timedelta
@@ -48,17 +47,30 @@ with DAG(
     catchup=False,
     max_active_runs=1
     ) as dag:
-        task_extract_stats = PythonOperator(
-            task_id="extract_stats",
-            python_callable=extract_stats
+        task_extract_stats = SimpleHttpOperator(
+            task_id='extract_stats',
+            http_conn_id='tailscale',
+            endpoint='/extract/game-logs',
+            method='POST',
+            # This tells Airflow to mark the task successful only if 200 is returned
+            response_check=lambda response: response.status_code == 200, 
+            log_response=True,
             )
-        task_extract_player_info = PythonOperator(
-            task_id="extract_player_info",
-            python_callable=extract_player_info
+        task_extract_player_info = SimpleHttpOperator(
+            task_id='extract_player_info',
+            http_conn_id='tailscale',
+            endpoint='/extract/player-info',
+            method='POST',
+            response_check=lambda response: response.status_code == 200, 
+            log_response=True,
             )
-        task_extract_team_roster = PythonOperator(
-            task_id="extract_team_roster",
-            python_callable=extract_team_rosters
+        task_extract_team_roster = SimpleHttpOperator(
+            task_id='extract_team_roster',
+            http_conn_id='tailscale',
+            endpoint='/extract/team-rosters',
+            method='POST',
+            response_check=lambda response: response.status_code == 200, 
+            log_response=True,
             )
         task_transform_data = DbtTaskGroup(
             group_id="transform_nba_data",
