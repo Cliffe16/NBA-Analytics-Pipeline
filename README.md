@@ -120,6 +120,7 @@ sudo systemctl start nba-extraction
 * **Orchestration** is handled in the cloud via Apache Airflow hosted on an Azure Virtual Machine.
 * **Extraction** is executed on a local edge node(my personal Ubuntu laptop) running a custom FastAPI worker.
 * **Communication** between the Azure orchestrator and the local extraction node is secured via a **Tailscale WireGuard Mesh VPN**, completely bypassing the public internet, NAT routers and the Akamai WAF.
+
 More of this [here](docs/case_study.md)
 
 ## Key Technical Lessons
