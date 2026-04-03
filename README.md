@@ -10,6 +10,20 @@
 ## Project Overview
 This project is an end-to-end, automated ELT (Extract, Load, Transform) pipeline designed to extract comprehensive player and game statistics from the official NBA API, load the raw data into a Snowflake data warehouse and transform it into a dimensional model for analytics.
 
+**Business problem**
+
+Build an analytics platform that tracks NBA player and team performance across the season to answer questions like:
+
+* Which players are performing above/below expectations?
+
+* How does home court advantage impact team performance?
+
+* What's the relationship between player efficiency and team success?
+
+* How do player statistics change after trades?
+
+* Which teams are trending up or down based on recent performance?
+
 ## System Architecture
 **Pipeline Architecture**
 
@@ -139,6 +153,8 @@ More of this [here](docs/case_study.md)
 ## Key Technical Lessons
 **Distributed Systems:** Designed and debugged communication between cloud infrastructure and on-premise hardware using private mesh networking.
 
+**Stateful Extraction & Graceful Degradation:** Engineered robust Python extraction scripts that cache state, delta-load against existing Snowflake tables and utilize finally blocks to commit partial data payloads before failing, allowing Airflow retries to seamlessly resume from catastrophic API connection drops.
+
 **Advanced Dimensionla Modelling:** Implemented SCD Type 2 logic using window functions(`LAG`, `LEAD`) to accurately track player team histories over time.
 
 **API Rate Management:** Implemented robust error handling, dynamic timeouts and request throttling to maintain stable connections with heavily fortified enterprise APIs.
@@ -149,6 +165,8 @@ More of this [here](docs/case_study.md)
 
 Operating a hybrid cloud-to-edge architecture with strict APIs introduces unique edge cases. Here are common pitfalls and their implemented resolutions:
 
+* **Timeout Decoupling (Airflow vs. Worker):** A "timeout tug-of-war" occurred where Airflow's default` HTTP operator` timed out before the FastAPI worker could finish iterating through the rate-limited API calls resulting in 500 Internal Server Errors.
+    * *Fix:* Decoupled timeouts by utilizing extra_options={"timeout": 900} in Airflow's SimpleHttpOperator (giving the worker 15 minutes to run), while lowering the internal Python `nba_api` timeouts to 60s to "fail fast" on individual blocked requests. 
 * **Tailscale Connection Refused (Port 80 vs 8000):** If Airflow returns a `404 Not Found` HTML page from Apache, the `SimpleHttpOperator` probably knocked on default Port 80 instead of the FastAPI worker port 8000. 
   * *Fix:* Ensure the Airflow connection is configured with the correct port in the UI and the host explicitly includes the port(e.g., `http://100.x.x.x:8000`).
 * **systemd Worker Crashing (Status 203/EXEC):** If the Ubuntu edge worker fails to start or gets stuck in a restart loop, systemd cannot locate the `uvicorn` executable. 
