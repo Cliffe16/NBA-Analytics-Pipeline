@@ -5,42 +5,51 @@ WITH source AS (
 cleaned AS(
         SELECT
                 -- IDs
-                PERSON_ID::INTEGER AS player_id,
-                FIRST_NAME::VARCHAR AS first_name,
-                LAST_NAME::VARCHAR AS last_name,
-                DISPLAY_FIRST_LAST::VARCHAR AS player_name,
+                CAST(PERSON_ID AS INT64) AS player_id,
+                CAST(FIRST_NAME AS STRING) AS first_name,
+                CAST(LAST_NAME AS STRING) AS last_name,
+                CAST(DISPLAY_FIRST_LAST AS STRING) AS player_name,
+                
                 -- Biographical Info
-                TRY_TO_DATE(BIRTHDATE) AS birth_date,
-                SCHOOL::VARCHAR AS school,
-                COUNTRY::VARCHAR AS country,
+                SAFE.PARSE_DATE('%Y-%m-%d', SUBSTR(CAST(BIRTHDATE AS STRING), 1, 10)) AS birth_date,
+                CAST(SCHOOL AS STRING) AS school,
+                CAST(COUNTRY AS STRING) AS country,
+                
                 -- Physical Attributes
-                HEIGHT::VARCHAR AS height,
-                WEIGHT::VARCHAR AS weight,
+                CAST(HEIGHT AS STRING) AS height,
+                CAST(WEIGHT AS STRING) AS weight,
+                
                 -- convert height to inches
                 CASE
                         WHEN HEIGHT LIKE '%-%' THEN
-                                (SPLIT_PART(HEIGHT, '-', 1)::INTEGER * 12) +
-                                SPLIT_PART(HEIGHT, '-', 2)::INTEGER
+                                (CAST(SPLIT(HEIGHT, '-')[SAFE_OFFSET(0)] AS INT64) * 12) +
+                                CAST(SPLIT(HEIGHT, '-')[SAFE_OFFSET(1)] AS INT64)
                         ELSE NULL
                 END AS height_inches,
+                
                 -- convert weight to integer 
-                TRY_CAST(WEIGHT AS INTEGER) AS weight_pounds,
-                POSITION::VARCHAR AS position,
-                JERSEY::VARCHAR AS jersey_number,
-                SEASON_EXP::VARCHAR AS season_experience,
+                SAFE_CAST(WEIGHT AS INT64) AS weight_pounds,
+                CAST(POSITION AS STRING) AS position,
+                CAST(JERSEY AS STRING) AS jersey_number,
+                CAST(SEASON_EXP AS STRING) AS season_experience,
+                
                 -- Current team
-                TEAM_ID::INTEGER AS current_team_id,
-                TEAM_NAME::VARCHAR AS current_team_name,
-                TEAM_ABBREVIATION::VARCHAR AS current_team_abbreviation,
+                CAST(TEAM_ID AS INT64) AS current_team_id,
+                CAST(TEAM_NAME AS STRING) AS current_team_name,
+                CAST(TEAM_ABBREVIATION AS STRING) AS current_team_abbreviation,
+                
                 -- Status
-                ROSTERSTATUS::VARCHAR AS roster_status,
+                CAST(ROSTERSTATUS AS STRING) AS roster_status,
+                
                 -- Career span
-                FROM_YEAR::INTEGER AS career_start_year,
-                TO_YEAR::INTEGER AS career_end_year,
+                CAST(FROM_YEAR AS INT64) AS career_start_year,
+                CAST(TO_YEAR AS INT64) AS career_end_year,
+                
                 -- Draft info
-                DRAFT_YEAR::VARCHAR AS draft_year,
-                DRAFT_ROUND::VARCHAR AS draft_round,
-                DRAFT_NUMBER::VARCHAR AS draft_number,
+                CAST(DRAFT_YEAR AS STRING) AS draft_year,
+                CAST(DRAFT_ROUND AS STRING) AS draft_round,
+                CAST(DRAFT_NUMBER AS STRING) AS draft_number,
+                
                 -- Metadata
                 loaded_at
         FROM source
@@ -52,9 +61,9 @@ deduped AS(
                 ROW_NUMBER() OVER(
                         PARTITION BY player_id
                         ORDER BY loaded_at DESC
-                        ) AS row_num
+                        ) AS rn
         FROM cleaned
 )
-SELECT * EXCLUDE row_num
+SELECT * EXCEPT (rn)
 FROM deduped
-WHERE row_num = 1
+WHERE rn = 1
