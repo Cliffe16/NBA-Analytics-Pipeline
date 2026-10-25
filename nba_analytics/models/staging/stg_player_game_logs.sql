@@ -62,10 +62,10 @@ deduped AS(
 		ROW_NUMBER() OVER(
 			PARTITION BY game_id, player_id
 			ORDER BY game_date DESC
-			) AS row_num
+			) AS rn
 	FROM cleaned
 )
 -- Select most recent records
-SELECT * EXCEPT (row_num)
+SELECT * EXCEPT (rn)
 FROM deduped
-WHERE row_num = 1
+WHERE rn = 1
