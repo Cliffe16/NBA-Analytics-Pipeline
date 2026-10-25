@@ -4,33 +4,33 @@ WITH source AS(
 cleaned AS(
 	SELECT
         	-- Snapshot metadata
-        	snapshot_date::DATE AS snapshot_date,
+        	CAST(snapshot_date AS DATE) AS snapshot_date,
         	-- IDs
-        	TeamID::INTEGER AS team_id,
-        	PLAYER_ID::INTEGER AS player_id,
-        	PLAYER::VARCHAR AS player_name,
-        	SEASON::VARCHAR AS season,
+        	CAST(TeamID AS INT64) AS team_id,
+        	CAST(PLAYER_ID AS INT64) AS player_id,
+        	CAST(PLAYER AS STRING) AS player_name,
+        	CAST(SEASON AS STRING) AS season,
         	-- Player details
-        	NUM::VARCHAR AS jersey_number,
-        	POSITION::VARCHAR AS position,
+        	CAST(NUM AS STRING) AS jersey_number,
+        	CAST(POSITION AS STRING) AS position,
         	-- Physical attributes
-        	HEIGHT::VARCHAR AS height,
-        	WEIGHT::VARCHAR AS weight,
+        	CAST(HEIGHT AS STRING) AS height,
+        	CAST(WEIGHT AS STRING) AS weight,
         	-- Convert height to inches
         	CASE
             		WHEN HEIGHT LIKE '%-%' THEN
-                		(SPLIT_PART(HEIGHT, '-', 1)::INTEGER * 12) +
-                		SPLIT_PART(HEIGHT, '-', 2)::INTEGER
+                		(CAST(SPLIT(HEIGHT, '-')[SAFE_OFFSET(0)] AS INT64) * 12) +
+                		CAST(SPLIT(HEIGHT, '-')[SAFE_OFFSET(1)] AS INT64)
             		ELSE NULL
         	END AS height_inches,
         	-- Convert weight to integer
-        	TRY_CAST(WEIGHT AS INTEGER) AS weight_pounds,
+        	SAFE_CAST(WEIGHT AS INT64) AS weight_pounds,
         	-- Biographical
-        	TRY_TO_DATE(BIRTH_DATE) AS birth_date,
-        	AGE::VARCHAR AS age,
-        	EXP::VARCHAR AS years_experience,
-        	SCHOOL::VARCHAR AS school,
-        	HOW_ACQUIRED::VARCHAR AS how_acquired,
+        	SAFE.PARSE_DATE('%Y-%m-%d', SUBSTR(CAST(BIRTH_DATE AS STRING), 1, 10)) AS birth_date,
+        	CAST(AGE AS STRING) AS age,
+        	CAST(EXP AS STRING) AS years_experience,
+        	CAST(SCHOOL AS STRING) AS school,
+        	CAST(HOW_ACQUIRED AS STRING) AS how_acquired,
         	-- Metadata
         	loaded_at
 	FROM source
@@ -44,10 +44,10 @@ deduped AS(
         	ROW_NUMBER() OVER(
             		PARTITION BY snapshot_date, player_id, team_id
             		ORDER BY loaded_at DESC
-        		) AS row_num
+        		) AS rn
 	FROM cleaned
 )
 
-SELECT * EXCLUDE row_num
+SELECT * EXCEPT (rn)
 FROM deduped
-WHERE row_num = 1
+WHERE rn = 1
