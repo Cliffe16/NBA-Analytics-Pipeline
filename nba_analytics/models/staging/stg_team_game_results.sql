@@ -1,18 +1,24 @@
 WITH source AS(
 	SELECT * FROM {{ source('raw', 'raw_team_game_results') }}
+    {% if target.name == 'dev' %}
+    --Check if running locally to restrict the scan to 7 days
+    WHERE SAFE.PARSE_DATE('%Y-%m-%d', SUBSTR(GAME_DATE, 1, 10)) >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
+
+    {% endif %}
 ),
 cleaned AS(
 	SELECT
         	-- IDs
-		GAME_ID::VARCHAR AS game_id,
+		CAST(GAME_ID AS STRING) AS game_id,
         	COALESCE(
-                TRY_TO_DATE(SUBSTR(GAME_DATE, 1, 10), 'YYYY-MM-DD'),
-                TRY_CAST(GAME_DATE AS DATE)) AS game_date,
-        	SEASON_ID::VARCHAR AS season,
-        	TEAM_ID::INTEGER AS team_id,
-        	TEAM_ABBREVIATION::VARCHAR AS team_abbreviation,
-        	TEAM_NAME::VARCHAR AS team_name,
-        	MATCHUP::VARCHAR AS matchup,
+                SAFE.PARSE_DATE('%Y-%m-%d', SUBSTR(GAME_DATE, 1, 10)),
+                SAFE_CAST(GAME_DATE AS DATE)
+            ) AS game_date,
+        	CAST(SEASON_ID AS STRING) AS season,
+        	CAST(TEAM_ID AS INT64) AS team_id,
+        	CAST(TEAM_ABBREVIATION AS STRING) AS team_abbreviation,
+        	CAST(TEAM_NAME AS STRING) AS team_name,
+        	CAST(MATCHUP AS STRING) AS matchup,
         	-- Win/loss flag
         	CASE
             		WHEN WL = 'W' THEN TRUE
@@ -26,27 +32,27 @@ cleaned AS(
             		ELSE NULL
         		END AS home_away,
         	-- Minutes(240 for regulation, more for OT)
-        	COALESCE(MIN, 0)::INTEGER AS minutes_played,
+        	CAST(COALESCE(MIN, 0) AS INT64) AS minutes_played,
         	-- Team stats
-        	COALESCE(PTS, 0)::INTEGER AS points,
-        	COALESCE(FGM, 0)::INTEGER AS field_goals_made,
-        	COALESCE(FGA, 0)::INTEGER AS field_goals_attempted,
-        	FG_PCT::FLOAT AS field_goals_pct,
-        	COALESCE(FG3M, 0)::INTEGER AS three_pointers_made,
-        	COALESCE(FG3A, 0)::INTEGER AS three_pointers_attempted,
-        	FG3_PCT::FLOAT AS three_point_pct,
-        	COALESCE(FTM, 0)::INTEGER AS free_throws_made,
-        	COALESCE(FTA, 0)::INTEGER AS free_throws_attempted,
-        	FT_PCT::FLOAT AS free_throw_pct,
-        	COALESCE(OREB, 0)::INTEGER AS offensive_rebounds,
-        	COALESCE(DREB, 0)::INTEGER AS defensive_rebounds,
-        	COALESCE(REB, 0)::INTEGER AS total_rebounds,
-        	COALESCE(AST, 0)::INTEGER AS assists,
-        	COALESCE(STL, 0)::INTEGER AS steals,
-        	COALESCE(BLK, 0)::INTEGER AS blocks,
-        	COALESCE(TOV, 0)::INTEGER AS turnovers,
-        	COALESCE(PF, 0)::INTEGER AS personal_fouls,
-        	PLUS_MINUS::INTEGER AS plus_minus,
+        	CAST(COALESCE(PTS, 0) AS INT64) AS points,
+        	CAST(COALESCE(FGM, 0) AS INT64) AS field_goals_made,
+        	CAST(COALESCE(FGA, 0) AS INT64) AS field_goals_attempted,
+        	CAST(FG_PCT AS FLOAT64) AS field_goals_pct,
+        	CAST(COALESCE(FG3M, 0) AS INT64) AS three_pointers_made,
+        	CAST(COALESCE(FG3A, 0) AS INT64) AS three_pointers_attempted,
+        	CAST(FG3_PCT AS FLOAT64) AS three_point_pct,
+        	CAST(COALESCE(FTM, 0) AS INT64) AS free_throws_made,
+        	CAST(COALESCE(FTA, 0) AS INT64) AS free_throws_attempted,
+        	CAST(FT_PCT AS FLOAT64) AS free_throw_pct,
+        	CAST(COALESCE(OREB, 0) AS INT64) AS offensive_rebounds,
+        	CAST(COALESCE(DREB, 0) AS INT64) AS defensive_rebounds,
+        	CAST(COALESCE(REB, 0) AS INT64) AS total_rebounds,
+        	CAST(COALESCE(AST, 0) AS INT64) AS assists,
+        	CAST(COALESCE(STL, 0) AS INT64) AS steals,
+        	CAST(COALESCE(BLK, 0) AS INT64) AS blocks,
+        	CAST(COALESCE(TOV, 0) AS INT64) AS turnovers,
+        	CAST(COALESCE(PF, 0) AS INT64) AS personal_fouls,
+        	CAST(PLUS_MINUS AS INT64) AS plus_minus,
 
         	-- Metadata
         	loaded_at
@@ -60,10 +66,10 @@ deduped AS (
         ROW_NUMBER() OVER (
             PARTITION BY game_id, team_id
             ORDER BY loaded_at DESC
-        ) AS row_num
+        ) AS rn
     FROM cleaned
 )
 
-SELECT * EXCLUDE row_num
+SELECT * EXCEPT (rn)
 FROM deduped
-WHERE row_num = 1
+WHERE rn = 1
