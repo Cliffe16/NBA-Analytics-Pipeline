@@ -1,7 +1,7 @@
 from airflow import DAG
 from airflow.providers.http.operators.http import SimpleHttpOperator
 from cosmos import DbtTaskGroup, ProjectConfig, ProfileConfig, ExecutionConfig
-from cosmos.profiles import SnowflakeUserPasswordProfileMapping
+from cosmos.profiles import GoogleCloudServiceAccountProfileMapping
 from datetime import datetime, timedelta
 import sys 
 import os
@@ -25,8 +25,12 @@ DBT_EXECUTABLE_PATH = os.path.join(project_root, os.getenv('DBT_BIN'))
 profile_config = ProfileConfig(
     profile_name="nba_pipeline",
     target_name="dev",
-    profile_mapping=SnowflakeUserPasswordProfileMapping(
-        conn_id="snowflake_dbt"
+    profile_mapping=GoogleCloudServiceAccountProfileMapping(
+        conn_id="google_cloud_default",
+        profile_args={
+            "project": os.getenv("GCP_PROJECT_ID"),
+            "dataset": "nba_marts"
+            }
         )
 )
 
