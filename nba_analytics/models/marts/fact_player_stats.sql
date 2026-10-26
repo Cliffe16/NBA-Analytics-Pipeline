@@ -1,10 +1,27 @@
 {{ config(
-    materialized='table'
+    materialized='incremental',
+    unique_key='player_fact_key',
+    incremental_strategy='merge',
+    --partition by day to reduce bytes scanned
+    partition_by={
+        "field": "game_date",
+        "data_type": "date".
+        "granularity": "day"
+        },
+    --cluster by high-cardinality columns
+    cluster_by=["team_key", "player_key"]
 ) }}
 
 
 WITH player_game_logs AS(
 	SELECT * FROM {{ ref('stg_player_game_logs') }}
+
+    --process only new or late arriving data
+    {% if is_incremental() %}
+    WHERE game_date >= DATE_SUB(
+        (SELECT MAX(game_date) FROM {{this}}), INTERVAL 3 DAY
+        )
+    {% endif %}
 ),
 -- Calculate player metrics
 metrics AS(
@@ -108,18 +125,19 @@ keys AS(
         	s.is_season_high_points,
         	s.is_season_high_rebounds,
         	s.is_season_high_assists,
-		s.is_season_high_blocks,
-                s.is_season_high_fouls,
-                s.is_season_high_steals,
-		s.is_season_high_3p,
-                s.is_season_high_turnovers
+		    s.is_season_high_blocks,
+            s.is_season_high_fouls,
+            s.is_season_high_steals,
+		    s.is_season_high_3p,
+            s.is_season_high_turnovers,
+            s.game_date
 	FROM season_highs s
     		LEFT JOIN {{ ref('dim_game') }} g 
         		ON s.game_id = g.game_id
     				LEFT JOIN {{ ref('dim_team') }} t 
         				ON s.team_id = t.team_id
     						LEFT JOIN {{ ref('dim_date') }} d 
-        						ON TO_CHAR(s.game_date, 'YYYYMMDD')::INTEGER = d.date_key
+        			            ON CAST(FORMAT_DATE('%Y%m%d', s.game_date) AS INT64) = d.date_key
         							-- find player record valid on game date
     								LEFT JOIN {{ ref('dim_player') }} p 
         								ON s.player_id = p.player_id 
