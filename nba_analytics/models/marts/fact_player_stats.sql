@@ -5,7 +5,7 @@
     --partition by day to reduce bytes scanned
     partition_by={
         "field": "game_date",
-        "data_type": "date".
+        "data_type": "date",
         "granularity": "day"
         },
     --cluster by high-cardinality columns
