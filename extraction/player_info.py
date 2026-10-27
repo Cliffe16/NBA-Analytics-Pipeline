@@ -29,12 +29,12 @@ def extract_player_info():
             )
             WHERE PLAYER_ID IS NOT NULL
         """
-        all_target_ids = get_bq_column_data(target_query)
+        all_target_ids = get_column_data(target_query)
         
         try:
             # Check who is already loaded
             loaded_query = f"SELECT DISTINCT PERSON_ID FROM {info_tbl}"
-            already_loaded_ids = get_bq_column_data(loaded_query)
+            already_loaded_ids = get_column_data(loaded_query)
         except Exception:
             already_loaded_ids = [] 
             
