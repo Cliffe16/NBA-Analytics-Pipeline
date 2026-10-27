@@ -51,7 +51,7 @@ cleaned AS(
                 CAST(DRAFT_NUMBER AS STRING) AS draft_number,
                 
                 -- Metadata
-                loaded_at
+                CURRENT_TIMESTAMP() AS loaded_at
         FROM source
         WHERE PERSON_ID IS NOT NULL
 ),

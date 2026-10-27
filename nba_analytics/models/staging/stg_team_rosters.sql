@@ -32,7 +32,7 @@ cleaned AS(
         	CAST(SCHOOL AS STRING) AS school,
         	CAST(HOW_ACQUIRED AS STRING) AS how_acquired,
         	-- Metadata
-        	loaded_at
+        	CURRENT_TIMESTAMP() AS loaded_at
 	FROM source
 	WHERE PLAYER_ID IS NOT NULL
         	AND TeamID IS NOT NULL
