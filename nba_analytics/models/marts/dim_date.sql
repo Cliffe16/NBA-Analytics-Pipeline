@@ -20,18 +20,18 @@ date_dimension AS(
 		EXTRACT(DAYOFWEEK FROM date_day) AS day_of_week_num,
 		FORMAT_DATE('%A', date_day) AS day_name,
 		EXTRACT(DAY FROM date_day) AS day_of_month,
-		EXTRACT(YEAR FROM date_day) AS day_of_year,
+		EXTRACT(DAYOFYEAR FROM date_day) AS day_of_year,
 		-- Week Attributes
 		EXTRACT(WEEK FROM date_day) AS week_of_year,
 		-- Month Attributes
 		EXTRACT(MONTH FROM date_day) AS month_num,
-		MONTHNAME(date_day) AS month_name,
-		TO_CHAR(date_day, 'YYYY-MM') AS year_month,
+        FORMAT_DATE('%B', date_day) AS month_name,
+        FORMAT_DATE('%Y-%m', date_day) AS year_month,
 		-- Quarter Attributes
-		QUARTER(date_day) AS quarter_num,
-		'Q' || QUARTER(date_day) || ' ' || YEAR(date_day) AS quarter_name,
+		EXTRACT(QUARTER FROM date_day) AS quarter_num,
+		'Q' || EXTRACT(QUARTER FROM date_day) || ' ' || EXTRACT(YEAR FROM date_day) AS quarter_name,
 		-- Year Attributes
-		YEAR(date_day) AS year,
+		EXTRACT(YEAR FROM date_day) AS year,
 		-- Day Flags
 		CASE
 			WHEN EXTRACT(DAYOFWEEK FROM date_day) IN (0, 6) THEN TRUE
