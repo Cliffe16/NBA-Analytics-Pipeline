@@ -1,5 +1,7 @@
 WITH source AS(
+
 	SELECT * FROM {{ source('raw', 'raw_team_game_results') }}
+
     {% if target.name == 'dev' %}
     --Check if running locally to restrict the scan to 7 days
     WHERE SAFE.PARSE_DATE('%Y-%m-%d', SUBSTR(GAME_DATE, 1, 10)) >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
@@ -55,7 +57,7 @@ cleaned AS(
         	CAST(PLUS_MINUS AS INT64) AS plus_minus,
 
         	-- Metadata
-        	loaded_at
+        	CURRENT_TIMESTAMP() AS loaded_at
     FROM source
     WHERE GAME_ID IS NOT NULL
         AND TEAM_ID IS NOT NULL
