@@ -19,12 +19,12 @@ date_dimension AS(
 		-- Day Attributes
 		EXTRACT(DAYOFWEEK FROM date_day) AS day_of_week_num,
 		FORMAT_DATE('%A', date_day) AS day_name,
-		DAYOFMONTH(date_day) AS day_of_month,
-		DAYOFYEAR(date_day) AS day_of_year,
+		EXTRACT(DAY FROM date_day) AS day_of_month,
+		EXTRACT(YEAR FROM date_day) AS day_of_year,
 		-- Week Attributes
-		WEEKOFYEAR(date_day) AS week_of_year,
+		EXTRACT(WEEK FROM date_day) AS week_of_year,
 		-- Month Attributes
-		MONTH(date_day) AS month_num,
+		EXTRACT(MONTH FROM date_day) AS month_num,
 		MONTHNAME(date_day) AS month_name,
 		TO_CHAR(date_day, 'YYYY-MM') AS year_month,
 		-- Quarter Attributes

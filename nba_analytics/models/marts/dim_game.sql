@@ -37,8 +37,8 @@ surrogate_key AS(
 		game_date,
 		season,
 		CASE
-			WHEN MONTH(game_date) >= 10 OR MONTH(game_date) <= 4 THEN 'Regular Season'
-			WHEN MONTH(game_date) IN (5, 6) THEN 'Playoffs'
+			WHEN EXTRACT(MONTH FROM game_date) >= 10 OR EXTRACT(MONTH FROM game_date) <= 4 THEN 'Regular Season'
+			WHEN EXTRACT(MONTH FROM game_date) IN (5, 6) THEN 'Playoffs'
 			ELSE 'Preseason'
 		END AS season_stage,
 		home_key,
