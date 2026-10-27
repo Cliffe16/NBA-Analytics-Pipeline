@@ -3,13 +3,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Database Configuration
-DB_ACCOUNT = os.getenv('SF_ACC')
-DB_USER = os.getenv('USER')
-DB_PASSWORD = os.getenv('PASS')
-WAREHOUSE = os.getenv('WAREHOUSE')
-DB = os.getenv('SF_DB')
-DB_SCHEMA = os.getenv('SCHEMA')
+# BigQuery routing variables
+GCP_PROJECT_ID = os.getenv("GCP_PROJECT_ID")
+STAGING_DATASET = os.getenv("STAGING_DATASET")
+
+if not GCP_PROJECT_ID or not STAGING_DATASET:
+    raise ValueError("Missing critical BigQuery environment variables in .env")
 
 # API Configuration
 API_DELAY = 0.6
