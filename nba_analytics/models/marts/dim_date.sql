@@ -18,7 +18,7 @@ date_dimension AS(
 		date_day AS date,
 		-- Day Attributes
 		EXTRACT(DAYOFWEEK FROM date_day) AS day_of_week_num,
-		DAYNAME(date_day) AS day_name,
+		FORMAT_DATE('%A', date_day) AS day_name,
 		DAYOFMONTH(date_day) AS day_of_month,
 		DAYOFYEAR(date_day) AS day_of_year,
 		-- Week Attributes
