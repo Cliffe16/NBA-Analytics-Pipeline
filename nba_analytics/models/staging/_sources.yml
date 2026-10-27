@@ -2,6 +2,8 @@ version: 2
 
 sources:
   - name: raw
+    database: nba-analytcs-dev
+    schema: STAGING
     description: Raw data loaded from NBA API
 
     tables:
