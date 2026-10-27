@@ -4,6 +4,7 @@ from google.cloud import bigquery
 from extraction.config import GCP_PROJECT_ID, STAGING_DATASET
 from extraction import config
 from airflow.hooks.base import BaseHook
+import pandas as pd
 
 # Set-up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
