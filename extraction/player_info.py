@@ -3,7 +3,7 @@ import time
 import logging
 import pandas as pd
 from nba_api.stats.endpoints import commonplayerinfo
-from extraction.utils import get_snowflake_conn, db_load
+from extraction.utils import db_load, get_column_data
 from extraction import config
 from requests.exceptions import ReadTimeout
 
@@ -11,37 +11,40 @@ logger = logging.getLogger(__name__)
 
 def extract_player_info():
     """Extracts players' biographical information with state-saving"""
-    conn = get_snowflake_conn()
     player_info_frames = []
     
     try:
         logger.info("Fetching current active players...")
-        cur = conn.cursor()
+        # Construct BigQuery table references dynamically using backticks
+        project_dataset = f"`{config.GCP_PROJECT_ID}.{config.STAGING_DATASET}"
+        rosters_tbl = f"{project_dataset}.{config.TEAM_ROSTERS_TABLE}`"
+        logs_tbl = f"{project_dataset}.{config.PLAYER_STATS_TABLE}`"
+        info_tbl = f"{project_dataset}.{config.PLAYER_INFO_TABLE}`"
 
-        # Fetch players who've been in a roster this season
-        cur.execute("""
+        target_query = f"""
             SELECT DISTINCT PLAYER_ID FROM(
-                SELECT PLAYER_ID FROM NBA_ANALYTICS.RAW.RAW_TEAM_ROSTERS 
-                UNION 
-                SELECT PLAYER_ID FROM NBA_ANALYTICS.RAW.RAW_PLAYER_GAME_LOGS
+                SELECT PLAYER_ID FROM {rosters_tbl}
+                UNION DISTINCT 
+                SELECT PLAYER_ID FROM {logs_tbl}
             )
             WHERE PLAYER_ID IS NOT NULL
-        """)
-        all_target_ids = [row[0] for row in cur.fetchall()]
+        """
+        all_target_ids = get_bq_column_data(target_query)
         
-        # STATE-SAVING: Check who we already successfully loaded in previous failed runs
         try:
-            cur.execute(f"SELECT DISTINCT PERSON_ID FROM NBA_ANALYTICS.RAW.{config.PLAYER_INFO_TABLE}")
-            already_loaded_ids = [row[0] for row in cur.fetchall()]
+            # Check who is already loaded
+            loaded_query = f"SELECT DISTINCT PERSON_ID FROM {info_tbl}"
+            already_loaded_ids = get_bq_column_data(loaded_query)
         except Exception:
-            already_loaded_ids = [] # Table might not exist yet on first run
+            already_loaded_ids = [] 
             
-        # Only process players we don't already have
         active_player_ids = [pid for pid in all_target_ids if pid not in already_loaded_ids]
         
         if not active_player_ids:
             logger.info("All player info already extracted. Skipping.")
             return
+
+        logger.info(f"Extracting info for {len(active_player_ids)} remaining players...")
 
         logger.info(f"Extracting info for {len(active_player_ids)} remaining players...")
         
@@ -68,7 +71,7 @@ def extract_player_info():
                         time.sleep(5)  
                     else:
                         logger.error(f"Failed to fetch player {player_id}. API likely severed connection.")
-                        # We raise the error here to trigger the 'finally' block and alert Airflow
+                        # Trigger the 'finally' block and alert Airflow
                         raise e 
 
     except Exception as e:
@@ -76,11 +79,7 @@ def extract_player_info():
         raise
         
     finally:
-        # THE RESCUE BLOCK: Save whatever we managed to grab before the crash
         if player_info_frames:
-            logger.info(f"Saving {len(player_info_frames)} players to Snowflake before exiting...")
+            logger.info(f"Saving {len(player_info_frames)} players to BigQuery before exiting...")
             player_info_df = pd.concat(player_info_frames, ignore_index=True)
-            db_load(player_info_df, config.PLAYER_INFO_TABLE, conn)
-            
-        conn.close()
-        logging.info("Database connection closed.")
+            db_load(player_info_df, config.PLAYER_INFO_TABLE)
