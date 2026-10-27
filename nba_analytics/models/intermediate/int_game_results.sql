@@ -1,3 +1,7 @@
+{{ config(
+    materialized='ephemeral'
+) }}
+
 WITH team_games AS(
 	SELECT
 		game_id,
