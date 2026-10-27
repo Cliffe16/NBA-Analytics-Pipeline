@@ -1,3 +1,7 @@
+{{ config(
+    materialized='ephemeral'
+) }}
+
 WITH roster_snapshots AS(
 	SELECT 
 		player_id,
