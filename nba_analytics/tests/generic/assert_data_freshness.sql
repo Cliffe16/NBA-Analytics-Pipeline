@@ -1,4 +1,4 @@
-{% test assert_data_is_recent(model, column_name, days_back=3) %}
+{% test assert_data_freshness(model, column_name, days_back=3) %}
 
 -- This test fails if the most recent date in the table is older than 'days_back'
 WITH max_date_cte AS (
