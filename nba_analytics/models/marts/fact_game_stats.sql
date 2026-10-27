@@ -16,15 +16,15 @@ teams AS(
         	away_points AS points_allowed,
         	-- Percentages
         	CASE 
-			WHEN home_fga > 0 THEN (CAST(home_fgm AS FLOAT) / home_fga) * 100.0
+			WHEN home_fga > 0 THEN (CAST(home_fgm AS FLOAT64) / home_fga) * 100.0
 			ELSE 0 
 		END AS field_goals_pct,
         	CASE 
-			WHEN home_fg3a > 0 THEN (CAST(home_fg3m AS FLOAT) / home_fg3a) * 100.0
+			WHEN home_fg3a > 0 THEN (CAST(home_fg3m AS FLOAT64) / home_fg3a) * 100.0
 			ELSE 0 
 		END AS three_point_pct,
         	CASE 
-			WHEN home_fta > 0 THEN (CAST(home_ftm AS FLOAT) / home_fta) * 100.0
+			WHEN home_fta > 0 THEN (CAST(home_ftm AS FLOAT64) / home_fta) * 100.0
 			ELSE 0 
 		END AS free_throw_pct,
         	home_rebounds AS total_rebounds,
@@ -51,15 +51,15 @@ teams AS(
         	home_points AS points_allowed,
         	-- Percentages
         	CASE 
-			WHEN away_fga > 0 THEN (CAST(away_fgm AS FLOAT) / away_fga) * 100.0
+			WHEN away_fga > 0 THEN (CAST(away_fgm AS FLOAT64) / away_fga) * 100.0
 			ELSE 0 
 		END AS field_goals_pct,
         	CASE 
-			WHEN away_fg3a > 0 THEN (CAST(away_fg3m AS FLOAT) / away_fg3a) * 100.0
+			WHEN away_fg3a > 0 THEN (CAST(away_fg3m AS FLOAT64) / away_fg3a) * 100.0
 			ELSE 0 
 		END AS three_point_pct,
         	CASE 
-			WHEN away_fta > 0 THEN (CAST(away_ftm AS FLOAT) / away_fta) * 100.0
+			WHEN away_fta > 0 THEN (CAST(away_ftm AS FLOAT64) / away_fta) * 100.0
 			ELSE 0 
 		END AS free_throw_pct,
         	away_rebounds AS total_rebounds,
