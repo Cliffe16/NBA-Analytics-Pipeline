@@ -43,8 +43,8 @@ date_dimension AS(
 		END AS is_weekday,
 		-- Define NBA Season(Oct-June; Oct-Dec are part of the next season)
 		CASE 
-			WHEN MONTH(date_day) >= 10 THEN YEAR(date_day) + 1
-			ELSE YEAR(date_day)
+			WHEN EXTRACT(MONTH FROM date_day) >= 10 THEN EXTRACT(YEAR FROM date_day) + 1
+			ELSE EXTRACT(YEAR FROM date_day)
 		END AS nba_season_end_year
 	FROM date_spine
 )
