@@ -37,12 +37,12 @@ models:
     columns:
       - name: game_date
         tests:
-          - assert_data_is_recent:
+          - assert_data_freshness:
               days_back: 3
 
   - name: stg_player_game_logs
     columns:
       - name: game_date
         tests:
-          - assert_data_is_recent:
+          - assert_data_freshness:
               days_back: 3
