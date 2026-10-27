@@ -24,7 +24,8 @@ def extract_team_rosters():
                 logger.info(f"Processed rosters for {index}/{len(nba_teams)} teams...")
             roster = commonteamroster.CommonTeamRoster(
                 team_id=team['id'],
-                season=config.SEASON
+                season=config.SEASON,
+                timeout=60
                 )
             roster_frames.append(roster.get_data_frames()[0])
         
