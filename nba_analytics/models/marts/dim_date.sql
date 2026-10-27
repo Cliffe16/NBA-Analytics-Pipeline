@@ -17,7 +17,7 @@ date_dimension AS(
 		-- Natural Key
 		date_day AS date,
 		-- Day Attributes
-		DAYOFWEEK(date_day) AS day_of_week_num,
+		EXTRACT(DAYOFWEEK FROM date_day) AS day_of_week_num,
 		DAYNAME(date_day) AS day_name,
 		DAYOFMONTH(date_day) AS day_of_month,
 		DAYOFYEAR(date_day) AS day_of_year,
@@ -34,11 +34,11 @@ date_dimension AS(
 		YEAR(date_day) AS year,
 		-- Day Flags
 		CASE
-			WHEN DAYOFWEEK(date_day) IN (0, 6) THEN TRUE
+			WHEN EXTRACT(DAYOFWEEK FROM date_day) IN (0, 6) THEN TRUE
 			ELSE FALSE
 		END AS is_weekend,
 		CASE
-			WHEN DAYOFWEEK(date_day) BETWEEN 1 AND 5 THEN TRUE
+			WHEN EXTRACT(DAYOFWEEK FROM date_day) BETWEEN 1 AND 5 THEN TRUE
 			ELSE FALSE
 		END AS is_weekday,
 		-- Define NBA Season(Oct-June; Oct-Dec are part of the next season)
