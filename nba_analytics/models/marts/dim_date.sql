@@ -13,7 +13,7 @@ WITH date_spine AS(
 date_dimension AS(
 	SELECT
 		-- Surrogate Key
-		TO_CHAR(date_day, 'YYYYMMDD')::INTEGER AS date_key,
+        CAST(FORMAT_DATE('%Y%m%d', date_day) AS INT64) AS date_key,
 		-- Natural Key
 		date_day AS date,
 		-- Day Attributes
