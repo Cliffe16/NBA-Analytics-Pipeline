@@ -1,8 +1,6 @@
 --Partition by day to reduce bytes scanned and cluster by high-cardinality columns
 {{ config(
-    materialized='incremental',
-    unique_key='player_fact_key',
-    incremental_strategy='merge',
+    materialized='table',
     partition_by={
         "field": "game_date",
         "data_type": "date",
@@ -14,13 +12,6 @@
 
 WITH player_game_logs AS(
 	SELECT * FROM {{ ref('stg_player_game_logs') }}
-
-    --process only new or late arriving data
-    {% if is_incremental() %}
-    WHERE game_date >= DATE_SUB(
-        (SELECT MAX(game_date) FROM {{this}}), INTERVAL 3 DAY
-        )
-    {% endif %}
 ),
 -- Calculate player metrics
 metrics AS(
