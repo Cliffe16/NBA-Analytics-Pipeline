@@ -16,11 +16,11 @@ WITH roster_snapshots AS(
 team_changes AS(
 	SELECT
 		player_id,
-                player_name,
-                team_id,
-                snapshot_date,
-                position,
-                jersey_number,
+        player_name,
+        team_id,
+        snapshot_date,
+        position,
+        jersey_number,
 		LAG(team_id) OVER(PARTITION BY player_id ORDER BY snapshot_date) AS previous_team_id,
 		LAG(snapshot_date) OVER(PARTITION BY player_id ORDER BY snapshot_date) AS previous_snapshot_date
 	FROM roster_snapshots
@@ -29,11 +29,11 @@ team_changes AS(
 changes_flagged AS(
 	SELECT
 		player_id,
-                player_name,
-                team_id,
-                snapshot_date,
-                position,
-                jersey_number,
+        player_name,
+        team_id,
+        snapshot_date,
+        position,
+        jersey_number,
 		previous_team_id,
 		CASE
 			WHEN previous_team_id IS NULL THEN TRUE
