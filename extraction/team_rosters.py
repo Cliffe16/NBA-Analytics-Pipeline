@@ -4,7 +4,7 @@ from datetime import datetime
 import pandas as pd
 from nba_api.stats.endpoints import commonteamroster
 from nba_api.stats.static import teams
-from extraction.utils import get_snowflake_conn, db_load
+from extraction.utils import db_load
 import logging
 from extraction import config
 
@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 def extract_team_rosters():
     """Extracts team roster information"""
-    conn = get_snowflake_conn()
     try:
         logger.info("Extracting Team Rosters...")
         nba_teams = teams.get_teams()
@@ -32,11 +31,8 @@ def extract_team_rosters():
         roster_df = pd.concat(roster_frames, ignore_index=True)
         roster_df['SNAPSHOT_DATE'] = current_date
 
-        db_load(roster_df, config.TEAM_ROSTERS_TABLE, conn)
+        db_load(roster_df, config.TEAM_ROSTERS_TABLE)
     
     except Exception as e:
         logger.error(f"Error extracting team rosters: {str(e)}")
         raise
-    finally:
-        conn.close
-        logger.info("Snowflake connection closed.")
