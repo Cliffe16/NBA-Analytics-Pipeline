@@ -1,4 +1,4 @@
-{{ config(
+w{{ config(
     materialized='table'
 ) }}
 
@@ -16,15 +16,15 @@ teams AS(
         	away_points AS points_allowed,
         	-- Percentages
         	CASE 
-			WHEN home_fga > 0 THEN (home_fgm::FLOAT / home_fga) * 100.0
+			WHEN home_fga > 0 THEN (CAST(home_fgm AS FLOAT) / home_fga) * 100.0
 			ELSE 0 
 		END AS field_goals_pct,
         	CASE 
-			WHEN home_fg3a > 0 THEN (home_fg3m::FLOAT / home_fg3a) * 100.0
+			WHEN home_fg3a > 0 THEN (CAST(home_fg3m AS FLOAT) / home_fg3a) * 100.0
 			ELSE 0 
 		END AS three_point_pct,
         	CASE 
-			WHEN home_fta > 0 THEN (home_ftm::FLOAT / home_fta) * 100.0
+			WHEN home_fta > 0 THEN (CAST(home_ftm AS FLOAT) / home_fta) * 100.0
 			ELSE 0 
 		END AS free_throw_pct,
         	home_rebounds AS total_rebounds,
@@ -51,15 +51,15 @@ teams AS(
         	home_points AS points_allowed,
         	-- Percentages
         	CASE 
-			WHEN away_fga > 0 THEN (away_fgm::FLOAT / away_fga) * 100.0
+			WHEN away_fga > 0 THEN (CAST(away_fgm AS FLOAT) / away_fga) * 100.0
 			ELSE 0 
 		END AS field_goals_pct,
         	CASE 
-			WHEN away_fg3a > 0 THEN (away_fg3m::FLOAT / away_fg3a) * 100.0
+			WHEN away_fg3a > 0 THEN (CAST(away_fg3m AS FLOAT) / away_fg3a) * 100.0
 			ELSE 0 
 		END AS three_point_pct,
         	CASE 
-			WHEN away_fta > 0 THEN (away_ftm::FLOAT / away_fta) * 100.0
+			WHEN away_fta > 0 THEN (CAST(away_ftm AS FLOAT) / away_fta) * 100.0
 			ELSE 0 
 		END AS free_throw_pct,
         	away_rebounds AS total_rebounds,
@@ -103,7 +103,7 @@ keys AS(
     						LEFT JOIN {{ ref('dim_team') }} opp 
         						ON t.opponent_team_id = opp.team_id
     								LEFT JOIN {{ ref('dim_date') }} d 
-        								ON TO_CHAR(t.game_date, 'YYYYMMDD')::INTEGER = d.date_key
+                                        ON CAST(FORMAT_DATE('%Y%m%d', t.game_date) AS INT64) = d.date_key
 )
 
 SELECT * FROM keys
