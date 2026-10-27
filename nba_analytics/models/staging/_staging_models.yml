@@ -33,3 +33,16 @@ models:
       - name: team_id
         tests:
           - not_null
+  - name: stg_team_game_results
+    columns:
+      - name: game_date
+        tests:
+          - assert_data_is_recent:
+              days_back: 3
+
+  - name: stg_player_game_logs
+    columns:
+      - name: game_date
+        tests:
+          - assert_data_is_recent:
+              days_back: 3
