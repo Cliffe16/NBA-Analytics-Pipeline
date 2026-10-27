@@ -1,14 +1,13 @@
+--Partition by day to reduce bytes scanned and cluster by high-cardinality columns
 {{ config(
     materialized='incremental',
     unique_key='player_fact_key',
     incremental_strategy='merge',
-    --partition by day to reduce bytes scanned
     partition_by={
         "field": "game_date",
         "data_type": "date",
         "granularity": "day"
         },
-    --cluster by high-cardinality columns
     cluster_by=["team_key", "player_key"]
 ) }}
 
