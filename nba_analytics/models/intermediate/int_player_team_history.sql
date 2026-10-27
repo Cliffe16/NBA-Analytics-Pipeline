@@ -45,36 +45,36 @@ changes_flagged AS(
 -- Keep rows where team changed
 team_change_events AS(
 	SELECT
-		        player_id,
-                player_name,
-                team_id,
-                CASE
-                    WHEN previous_team_id IS NULL THEN '1990-01-01'::DATE
-                    ELSE snapshot_date
-                END AS effective_start_date,
-                position,
-                jersey_number
+        player_id,
+        player_name,
+        team_id,
+        CASE
+            WHEN previous_team_id IS NULL THEN CAST('1990-01-01' AS DATE)
+            ELSE snapshot_date
+        END AS effective_start_date,
+        position,
+        jersey_number
 	FROM changes_flagged
 	WHERE is_team_change = TRUE
 ),
 -- Add the date of departure
 team_end_date AS(
 	SELECT
-		player_id,
-                player_name,
-                team_id,
-                effective_start_date,
+        player_id,
+        player_name,
+        team_id,
+        effective_start_date,
 		LEAD(effective_start_date) OVER(PARTITION BY player_id ORDER BY effective_start_date) AS effective_end_date,
-                position,
-                jersey_number
+        position,
+        jersey_number
 	FROM team_change_events
 )
 SELECT
 	player_id,
-        player_name,
-        team_id,
-        effective_start_date,
-	COALESCE(effective_end_date, '2999-12-31'::DATE) AS effective_end_date,
+    player_name,
+    team_id,
+    effective_start_date,
+    COALESCE(effective_end_date, CAST('2999-12-31' AS DATE)) AS effective_end_date,
 	CASE
 		WHEN effective_end_date IS NULL THEN TRUE
 		ELSE FALSE
