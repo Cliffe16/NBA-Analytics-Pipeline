@@ -33,3 +33,6 @@ Thumbs.db
 # Misc
 *.log
 
+# Databases
+*.db
+*.sqlite3
