@@ -1,13 +1,18 @@
 import pytest
 from fastapi.testclient import TestClient
+from unittest.mock import patch
 import sqlite3
 import os
 from api import app 
 
 client = TestClient(app)
 
-def test_extraction_trigger_and_polling():
+@patch("api.game_logs.extract_stats")
+def test_extraction_trigger_and_polling(mock_extract):
     """Tests the async extraction layer to ensure the 202 Accepted pattern"""
+
+    # The mock will return without hitting the NBA API or BigQuery
+    mock_extract.return_value = None
     # Trigger the FastAPI lifespan event, creating the test database table
     with TestClient(app) as client:
         # Trigger the background extraction
