@@ -1,7 +1,7 @@
 import os
 import logging
 from google.cloud import bigquery
-from extraction.config import GCP_PROJECT_ID, STAGING_DATASET
+from extraction.config import GCP_PROJECT_ID, STAGING_DATASET, GCP_SERVICE_ACCOUNT_JSON
 from extraction import config
 from airflow.hooks.base import BaseHook
 import pandas as pd
@@ -11,8 +11,17 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 def get_bq_client() -> bigquery.Client:
-    """Initializes the BigQuery client"""
-    return bigquery.Client(project=GCP_PROJECT_ID)
+    """Initializes the BigQuery client with in-memeory credentials"""
+    if GCP_SERVICE_ACCOUNT_JSON:
+        # Parse the raw string from Azure Key Vault into a Python dictionary
+        creds_dict = json.loads(GCP_SERVICE_ACCOUNT_JSON)
+
+        # Generate the authentication token in memory
+        credentials = service_account.Credentials.from_service_account_info(creds_dict)
+        return bigquery.Client(credentials=credentials, project=GCP_PROJECT_ID)
+    else:
+        # Fallback for local development using Application Default Credentials
+        return bigquery.Client(project=GCP_PROJECT_ID)
 
 def db_load(df: pd.DataFrame, table_name: str) -> None:
     """Bulk loads a pandas dataframe into BigQuery"""

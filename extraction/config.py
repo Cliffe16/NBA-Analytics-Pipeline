@@ -25,6 +25,7 @@ ALERT_EMAIL = get_azure_secret(VAULT_URL, "ALERT-EMAIL")
 
 # BigQuery routing variables
 GCP_PROJECT_ID = get_azure_secret(VAULT_URL, "GCP-PROJECT-ID")
+GCP_SERVICE_ACCOUNT_JSON = get_azure_secret(VAULT_URL, "GCP-SERVICE-ACCOUNT")
 STAGING_DATASET = get_azure_secret(VAULT_URL, "STAGING-DATASET")
 
 if not GCP_PROJECT_ID or not STAGING_DATASET:
