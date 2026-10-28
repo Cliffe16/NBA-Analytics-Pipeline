@@ -1,0 +1,37 @@
+version: 2
+
+semantic_models:
+  - name: player_stats
+    description: Semantic model representing individual player game performances.
+    model: ref('fact_player_stats')
+    
+    defaults:
+      agg_time_dimension: game_date
+
+    entities:
+      - name: fact_key
+        type: primary
+      - name: player_key
+        type: foreign
+      - name: team_key
+        type: foreign
+
+    dimensions:
+      - name: game_date
+        type: time
+        type_params:
+          time_granularity: day
+          
+    measures:
+      - name: total_points_scored
+        description: Total points scored by players in the game.
+        expr: points
+        agg: sum
+      - name: total_assists
+        description: Total assists recorded.
+        expr: assists
+        agg: sum
+      - name: games_played
+        description: Count of game appearances.
+        expr: 1
+        agg: sum

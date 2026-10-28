@@ -1,0 +1,19 @@
+version: 2
+
+metrics:
+  - name: total_points
+    description: Total points scored across all games.
+    type: simple
+    label: Total Points
+    type_params:
+      measure: total_points_scored
+
+  - name: points_per_game
+    description: Average points scored per game.
+    type: derived
+    label: Points Per Game
+    type_params:
+      expr: total_points_scored / games_played
+      metrics:
+        - name: total_points
+        - name: games_played
