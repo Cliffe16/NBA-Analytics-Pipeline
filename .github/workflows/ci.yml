@@ -27,4 +27,7 @@ jobs:
         run: uv sync
 
       - name: Run Pytest
+        env:
+          GCP_PROJECT_ID: "ci-test-project"
+          STAGING_DATASET: "ci_test_dataset"
         run: uv run pytest test/ -v
