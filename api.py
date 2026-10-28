@@ -19,7 +19,7 @@ async def lifespan(app: FastAPI):
         """)
     yield
 
-app = FastAPI(title="NBA Local Extraction API", lifespan=lifesspan)
+app = FastAPI(title="NBA Local Extraction API", lifespan=lifespan)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
