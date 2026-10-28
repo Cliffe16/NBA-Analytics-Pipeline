@@ -8,12 +8,19 @@ metrics:
     type_params:
       measure: total_points_scored
 
+  - name: games_played
+    description: Total games played.
+    type: simple
+    label: Games Played
+    type_params:
+      measure: games_played
+
   - name: points_per_game
     description: Average points scored per game.
     type: derived
     label: Points Per Game
     type_params:
-      expr: total_points_scored / games_played
+      expr: total_points / games_played
       metrics:
         - name: total_points
         - name: games_played
