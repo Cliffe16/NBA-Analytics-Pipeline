@@ -5,7 +5,17 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "apache-airflow>=2.10.3",
+    "astronomer-cosmos>=1.15.1",
     "azure-identity>=1.27.0",
     "azure-keyvault-secrets>=4.12.0",
-    "google-cloud-secret-manager>=2.31.0",
+    "dbt-bigquery>=1.9.2",
+    "fastapi>=0.162.0",
+    "httpx>=0.28.1",
+    "nba-api>=1.12.0",
+    "pandas>=3.1.0",
+    "pandas-gbq>=0.35.3",
+    "protobuf<5.0.0",
+    "pytest>=9.2.0",
+    "uvicorn>=0.54.0",
 ]
