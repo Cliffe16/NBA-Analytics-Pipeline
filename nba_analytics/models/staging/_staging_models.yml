@@ -18,6 +18,11 @@ models:
       - name: minutes_played
         tests:
           - not_null
+      - name: game_date
+        tests:
+          - assert_data_freshness:
+              days_back: 3
+
   - name: stg_team_rosters  
     description: "Cleans team rosters"
     tests:
@@ -40,9 +45,3 @@ models:
           - assert_data_freshness:
               days_back: 3
 
-  - name: stg_player_game_logs
-    columns:
-      - name: game_date
-        tests:
-          - assert_data_freshness:
-              days_back: 3
