@@ -24,8 +24,8 @@ VAULT_URL = "https://nba-kv-bqenv.vault.azure.net/"
 ALERT_EMAIL = get_azure_secret(VAULT_URL, "ALERT-EMAIL")
 
 # BigQuery routing variables
-GCP_PROJECT_ID = os.getenv("GCP_PROJECT_ID")
-STAGING_DATASET = os.getenv("STAGING_DATASET")
+GCP_PROJECT_ID = get_azure_secret(VAULT_URL, "GCP-PROJECT-ID")
+STAGING_DATASET = get_azure_secret(VAULT_URL, "STAGING-DATASET")
 
 if not GCP_PROJECT_ID or not STAGING_DATASET:
     raise ValueError("Missing critical BigQuery environment variables in .env")
