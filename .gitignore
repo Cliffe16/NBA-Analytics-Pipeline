@@ -3,6 +3,7 @@
 profiles.yml
 *.pem
 *.key
+credentials.json
 
 # Python
 __pycache__/
