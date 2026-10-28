@@ -1,7 +1,27 @@
 import os
-from dotenv import load_dotenv
+import logging
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.secrets import SecretClient
 
-load_dotenv()
+logger = logging.getLogger(__name__)
+
+def get_azure_secret(vault_url: str, secret_name: str, fallback: str = None) -> str:
+    """Fetches a secret from Azure Key Vault"""
+    try:
+        credential = DefaultAzureCredential()
+        client = SecretClient(vault_url=vault_url, credential=credential)
+        
+        logger.info(f"Fetching {secret_name} from Azure Key Vault...")
+        return client.get_secret(secret_name).value
+        
+    except Exception as e:
+        logger.warning(f"Failed to fetch {secret_name} from AKV: {str(e)}. Using fallback.")
+        # Revert hyphens to underscores for local .env testing
+        env_var_name = secret_name.replace("-", "_")
+        return os.getenv(env_var_name, fallback)
+
+VAULT_URL = "https://nba-kv-bqenv.vault.azure.net/"
+ALERT_EMAIL = get_azure_secret(VAULT_URL, "ALERT-EMAIL")
 
 # BigQuery routing variables
 GCP_PROJECT_ID = os.getenv("GCP_PROJECT_ID")
