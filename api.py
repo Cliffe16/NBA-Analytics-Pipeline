@@ -5,6 +5,7 @@ import uuid
 import sys
 from contextlib import asynccontextmanager
 from extraction import game_logs, team_rosters, player_info
+import requests
 
 # Initialize database on startup
 @asynccontextmanager

@@ -1,10 +1,12 @@
 import os
 import logging
 from google.cloud import bigquery
+from google.oauth2 import service_account
 from extraction.config import GCP_PROJECT_ID, STAGING_DATASET, GCP_SERVICE_ACCOUNT_JSON
 from extraction import config
 from airflow.hooks.base import BaseHook
 import pandas as pd
+import json
 
 # Set-up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
