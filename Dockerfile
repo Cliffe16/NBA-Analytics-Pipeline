@@ -1,18 +1,18 @@
 FROM apache/airflow:2.10.0-python3.12
 
+# Switch to root to install ALL necessary C-compilers
 USER root
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+         build-essential \
+         libpq-dev \
+  && apt-get autoremove -yqq --purge \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 
-# Install PostgreSQL build dependencies and curl
-RUN apt-get update && \
-    apt-get install -y gcc libpq-dev curl && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
+# Switch back to the airflow user BEFORE installing Python packages
+USER airflow
 COPY requirements.txt /requirements.txt
 
-# Bypass Airflow's pip wrapper by installing uv directly via curl, then install requirements as root
-RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh && \
-    uv pip install --system --no-cache -r /requirements.txt
-
-# Drop privileges back to the secure airflow user
-USER airflow
+# Use Airflow's built-in pip to install the requirements natively
+RUN pip install --no-cache-dir "apache-airflow==${AIRFLOW_VERSION}" -r /requirements.txt
