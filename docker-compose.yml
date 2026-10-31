@@ -10,6 +10,9 @@ x-airflow-common:
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
     PYTHONPATH: '/opt/airflow:/opt/airflow/extraction'
+    DBT_ROOT: 'nba_analytics'
+    DBT_BIN: '/home/airflow/.local/bin/dbt'
+    GOOGLE_APPLICATION_CREDENTIALS: '/opt/airflow/gcp_creds.json'
     _PIP_ADDITIONAL_REQUIREMENTS: ''
   volumes:
     - ./airflow/dags:/opt/airflow/dags
@@ -17,6 +20,7 @@ x-airflow-common:
     - ./airflow/plugins:/opt/airflow/plugins
     - ./nba_analytics:/opt/airflow/nba_analytics
     - ./extraction:/opt/airflow/extraction
+    - ./gcp_creds.json:/opt/airflow/gcp_creds.json:ro
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     &airflow-common-depends-on
