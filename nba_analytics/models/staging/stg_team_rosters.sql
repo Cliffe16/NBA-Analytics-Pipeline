@@ -1,6 +1,15 @@
-WITH source AS(
-	SELECT * FROM {{ source('raw', 'raw_team_rosters') }}
+WITH historical_source AS (
+    SELECT * FROM {{ source('raw', 'raw_team_rosters_history') }}
 ),
+daily_source AS (
+    SELECT * FROM {{ source('raw', 'raw_team_rosters') }}
+),
+source AS (
+    SELECT * FROM historical_source
+    UNION ALL
+    SELECT * FROM daily_source
+),
+
 cleaned AS(
 	SELECT
         	-- Snapshot metadata

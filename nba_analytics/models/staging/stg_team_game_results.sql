@@ -1,13 +1,18 @@
-WITH source AS(
-
-	SELECT * FROM {{ source('raw', 'raw_team_game_results') }}
-
+WITH historical_source AS (
+    SELECT * FROM {{ source('raw', 'raw_team_game_results_history') }}
+),
+daily_source AS (
+    SELECT * FROM {{ source('raw', 'raw_team_game_results') }}
     {% if target.name == 'dev' %}
-    --Check if running locally to restrict the scan to 7 days
     WHERE SAFE.PARSE_DATE('%Y-%m-%d', SUBSTR(GAME_DATE, 1, 10)) >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
-
     {% endif %}
 ),
+source AS (
+    SELECT * FROM historical_source
+    UNION ALL
+    SELECT * FROM daily_source
+),
+
 cleaned AS(
 	SELECT
         	-- IDs
