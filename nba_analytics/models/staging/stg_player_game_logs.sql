@@ -1,11 +1,16 @@
-WITH source AS(
-	SELECT * FROM {{ source('raw', 'raw_player_game_logs') }}
-    --Check if running locally to restrict the scan to 7 days
+WITH historical_source AS (
+    SELECT * FROM {{ source('raw', 'raw_player_game_logs_history') }}
+),
+daily_source AS (
+    SELECT * FROM {{ source('raw', 'raw_player_game_logs') }}
     {% if target.name == 'dev' %}
-
     WHERE SAFE.PARSE_DATE('%Y-%m-%d', SUBSTR(GAME_DATE, 1, 10)) >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
-
     {% endif %}
+), 
+source AS(
+    SELECT * FROM historical_source
+    UNION ALL
+    SELECT * FROM daily_source
 ),
 -- Convert Uppercase column names to Snake case
 cleaned AS(
