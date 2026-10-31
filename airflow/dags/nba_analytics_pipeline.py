@@ -17,12 +17,14 @@ if project_root not in sys.path:
 from extraction.game_logs import extract_stats
 from extraction.player_info import extract_player_info
 from extraction.team_rosters import extract_team_rosters
+from extraction import config
 
 load_dotenv()
 
 # Define dbt directory and executable paths
 DBT_PROJECT_PATH = os.path.join(project_root, os.getenv('DBT_ROOT'))
 DBT_EXECUTABLE_PATH = os.path.join(project_root, os.getenv('DBT_BIN'))
+EMAIL = config.get_azure_secret('ALERT-EMAIL')
 
 # Map the Airflow snowflake connection to dbt
 profile_config = ProfileConfig(
@@ -71,7 +73,7 @@ with DAG(
     "nba_analytics_pipeline",
     default_args={
         "depends_on_past": False,
-        "email": [os.getenv('EMAIL')],
+        "email": [EMAIL] if EMAIL else [],
         "email_on_failure": True,
         "email_on_retry": False, 
         "retries": 3,
