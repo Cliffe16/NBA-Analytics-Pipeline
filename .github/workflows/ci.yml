@@ -55,4 +55,4 @@ jobs:
             docker compose restart airflow-scheduler airflow-worker
             
             # Restart the FastAPI bridge if API files changed
-            sudo systemctl restart fastapi.service # Adjust this line based on how you run your API
+            uv run uvicorn api:app --host 0.0.0.0 --port 8000
