@@ -34,7 +34,7 @@ def db_load(df: pd.DataFrame, table_name: str) -> None:
 
     # Overwrite staging tables daily to prevent bloat
     job_config = bigquery.LoadJobConfig(
-        write_disposition="WRITE_APPEND",
+        write_disposition="WRITE_TRUNCATE",
     )
 
     logger.info(f"Uploading {len(df)} rows to {table_id}...")
