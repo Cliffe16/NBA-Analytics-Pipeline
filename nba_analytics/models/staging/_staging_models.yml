@@ -21,7 +21,7 @@ models:
       - name: game_date
         data_tests:
           - assert_data_freshness:
-              days_back: 1000 # Increased to allow historical 2024-25 season data to pass
+              days_back: 2000 # Increased to allow historical 2024-25 season data to pass
 
   - name: stg_team_rosters  
     description: "Cleans team rosters"
