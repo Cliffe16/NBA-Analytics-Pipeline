@@ -33,7 +33,7 @@ if not GCP_PROJECT_ID or not STAGING_DATASET:
 
 # API Configuration
 API_DELAY = 0.6
-SEASON = '2024-25'
+SEASON = '2025-26'
 SEASON_TYPE = 'Regular Season'
 LEAGUE_ID = '00'
 
