@@ -1,8 +1,44 @@
 WITH historical_source AS (
-    SELECT * FROM {{ source('raw', 'raw_team_rosters_history') }}
+    SELECT 
+        TeamID,
+        SEASON,
+        LeagueID,
+        PLAYER,
+        NICKNAME,
+        PLAYER_SLUG,
+        NUM,
+        POSITION,
+        HEIGHT,
+        WEIGHT,
+        BIRTH_DATE,
+        AGE,
+        EXP,
+        SCHOOL,
+        PLAYER_ID,
+        HOW_ACQUIRED,
+        snapshot_date 
+    FROM {{ source('raw', 'raw_team_rosters_history') }}
 ),
 daily_source AS (
-    SELECT * FROM {{ source('raw', 'raw_team_rosters') }}
+    SELECT 
+        TeamID,
+        SEASON,
+        LeagueID,
+        PLAYER,
+        NICKNAME,
+        PLAYER_SLUG,
+        NUM,
+        POSITION,
+        HEIGHT,
+        WEIGHT,
+        BIRTH_DATE,
+        AGE,
+        EXP,
+        SCHOOL,
+        PLAYER_ID,
+        HOW_ACQUIRED,
+        snapshot_date 
+    FROM {{ source('raw', 'raw_team_rosters') }}
 ),
 source AS (
     SELECT * FROM historical_source
