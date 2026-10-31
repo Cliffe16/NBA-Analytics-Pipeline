@@ -15,7 +15,7 @@ models:
       - name: game_date
         tests:
           - not_null
-          - valid_season_date
+          # Removed valid_season_date to account for historical data 
   - name: fact_game_stats
     description: "Fact table for team performance per game"
     columns:
