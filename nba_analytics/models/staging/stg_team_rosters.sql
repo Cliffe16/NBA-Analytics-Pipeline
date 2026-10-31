@@ -1,51 +1,11 @@
-WITH historical_source AS (
-    SELECT 
-        TeamID,
-        SEASON,
-        LeagueID,
-        PLAYER,
-        NICKNAME,
-        PLAYER_SLUG,
-        NUM,
-        POSITION,
-        HEIGHT,
-        WEIGHT,
-        BIRTH_DATE,
-        AGE,
-        EXP,
-        SCHOOL,
-        PLAYER_ID,
-        HOW_ACQUIRED,
-        snapshot_date 
-    FROM {{ source('raw', 'raw_team_rosters_history') }}
-),
-daily_source AS (
-    SELECT 
-        TeamID,
-        SEASON,
-        LeagueID,
-        PLAYER,
-        NICKNAME,
-        PLAYER_SLUG,
-        NUM,
-        POSITION,
-        HEIGHT,
-        WEIGHT,
-        BIRTH_DATE,
-        AGE,
-        EXP,
-        SCHOOL,
-        PLAYER_ID,
-        HOW_ACQUIRED,
-        snapshot_date 
-    FROM {{ source('raw', 'raw_team_rosters') }}
-),
 source AS (
-    SELECT * FROM historical_source
-    UNION ALL
-    SELECT * FROM daily_source
+    {{ dbt_utils.union_relations(
+        relations=[
+            source('raw', 'raw_team_rosters_history'),
+            source('raw', 'raw_team_rosters')
+        ]
+    ) }}
 ),
-
 cleaned AS(
 	SELECT
         	-- Snapshot metadata
