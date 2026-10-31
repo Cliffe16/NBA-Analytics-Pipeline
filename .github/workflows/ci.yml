@@ -46,7 +46,7 @@ jobs:
           key: ${{ secrets.AZURE_SSH_KEY }}
           script: |
             # Navigate to your project directory on the VM
-            cd /opt/airflow
+            cd ~/NBA-Analytics-Pipeline
             
             # Pull the latest changes from the main branch
             git pull origin main
@@ -54,5 +54,3 @@ jobs:
             # Restart the scheduler and worker so Cosmos registers the new dbt files
             docker compose restart airflow-scheduler airflow-worker
             
-            # Restart the FastAPI bridge if API files changed
-            uv run uvicorn api:app --host 0.0.0.0 --port 8000
