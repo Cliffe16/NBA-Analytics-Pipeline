@@ -72,7 +72,7 @@ def extract_player_info():
                     else:
                         logger.error(f"Failed to fetch player {player_id}. API likely severed connection.")
                         # Trigger the 'finally' block and alert Airflow
-                        raise e 
+                        continue 
 
     except Exception as e:
         logger.error(f"Extraction interrupted: {str(e)}")
