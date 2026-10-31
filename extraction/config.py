@@ -38,7 +38,7 @@ SEASON_TYPE = 'Regular Season'
 LEAGUE_ID = '00'
 
 # Tables
-PLAYER_STATS_TABLE = 'raw_player_game_logs'
-GAME_STATS_TABLE = 'raw_team_game_results'
-TEAM_ROSTERS_TABLE = 'raw_team_rosters'
-PLAYER_INFO_TABLE = 'raw_player_info'
+PLAYER_STATS_TABLE = 'raw_player_game_logs_history'
+GAME_STATS_TABLE = 'raw_team_game_results_history'
+TEAM_ROSTERS_TABLE = 'raw_team_rosters_history'
+PLAYER_INFO_TABLE = 'raw_player_info_history'

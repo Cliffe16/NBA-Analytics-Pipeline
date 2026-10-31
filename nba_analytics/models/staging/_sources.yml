@@ -18,3 +18,10 @@ sources:
 
       - name: raw_team_rosters
         description: Team roster snapshots from CommonTeamRoster endpoint
+
+      - name: raw_player_game_logs_history
+        description: Historical Player box scores from PlayerGameLogs endpoint
+      - name: raw_team_game_results_history
+        description: Historical Team game results from LeagueGameFinder endpoint
+      - name: raw_team_rosters_history
+        escription: Historical Team roster snapshots from CommonTeamRoster endpoint
