@@ -3,8 +3,9 @@ WITH source AS (
         relations=[
             source('raw', 'raw_team_rosters_history'),
             source('raw', 'raw_team_rosters')
-        ]
-    ) }}
+            ]
+        )
+    }}
 ),
 cleaned AS(
 	SELECT
