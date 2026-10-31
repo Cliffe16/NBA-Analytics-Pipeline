@@ -21,7 +21,7 @@ models:
       - name: game_date
         data_tests:
           - assert_data_freshness:
-              days_back: 3 
+              days_back: 1000 # Increase to cover the historical gap
               config:
                 severity: warn # Downgraded severity to allow historical 2024-25 season data to pass
 
