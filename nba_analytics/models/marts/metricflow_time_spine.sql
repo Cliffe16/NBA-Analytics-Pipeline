@@ -2,5 +2,5 @@
 
 -- MetricFlow requires a dedicated time spine model to handle time-series aggregations
 SELECT
-    date_day
+    date AS date_day
 FROM {{ ref('dim_date') }}
