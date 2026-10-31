@@ -24,7 +24,7 @@ load_dotenv()
 # Define dbt directory and executable paths
 DBT_PROJECT_PATH = os.path.join(project_root, os.getenv('DBT_ROOT'))
 DBT_EXECUTABLE_PATH = os.path.join(project_root, os.getenv('DBT_BIN'))
-EMAIL = config.get_azure_secret('ALERT-EMAIL')
+EMAIL = config.ALERT_EMAIL
 
 # Map the Airflow snowflake connection to dbt
 profile_config = ProfileConfig(
