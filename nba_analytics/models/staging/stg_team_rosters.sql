@@ -1,4 +1,4 @@
-source AS (
+WITH source AS (
     {{ dbt_utils.union_relations(
         relations=[
             source('raw', 'raw_team_rosters_history'),
