@@ -16,10 +16,10 @@ WITH player_game_logs AS(
 -- Calculate player metrics
 metrics AS(
 	SELECT *,
-		-- True Shooting Percentage: TOTAL PTS / (2 * (FGA + 0.44*FTA))
+        -- True Shooting Percentage: TOTAL PTS / (2 * (FGA + 0.44*FTA))
 		CASE
 			WHEN (field_goals_attempted + (0.44 * free_throws_attempted)) > 0
-				THEN points / (2.0 * field_goals_attempted + (0.44 * free_throws_attempted))
+				THEN points / (2.0 * (field_goals_attempted + (0.44 * free_throws_attempted)))
 			ELSE NULL
 		END AS true_shooting_pct,
 		-- Game Score (metric measuring a player's single-game productivity based on box score stats)
