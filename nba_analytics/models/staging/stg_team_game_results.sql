@@ -62,7 +62,7 @@ cleaned AS(
         	CAST(PLUS_MINUS AS INT64) AS plus_minus,
 
         	-- Metadata
-        	CURRENT_TIMESTAMP() AS loaded_at
+        	COALESCE(SAFE_CAST(LOADED_AT AS TIMESTAMP), TIMESTAMP('1970-01-01')) AS loaded_at
     FROM source
     WHERE GAME_ID IS NOT NULL
         AND TEAM_ID IS NOT NULL

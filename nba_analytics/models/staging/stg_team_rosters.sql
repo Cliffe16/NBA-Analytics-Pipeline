@@ -38,7 +38,7 @@ cleaned AS(
         	CAST(SCHOOL AS STRING) AS school,
         	CAST(HOW_ACQUIRED AS STRING) AS how_acquired,
         	-- Metadata
-        	CURRENT_TIMESTAMP() AS loaded_at
+        	COALESCE(SAFE_CAST(LOADED_AT AS TIMESTAMP), TIMESTAMP('1970-01-01')) AS loaded_at
 	FROM source
 	WHERE PLAYER_ID IS NOT NULL
         	AND TeamID IS NOT NULL
