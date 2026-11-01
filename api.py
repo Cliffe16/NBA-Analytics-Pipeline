@@ -18,6 +18,7 @@ async def lifespan(app: FastAPI):
                 status TEXT
             )
         """)
+        conn.execute("UPDATE tasks SET status='failed: worker restarted' WHERE status IN ('pending','running')")
     yield
 
 app = FastAPI(title="NBA Local Extraction API", lifespan=lifespan)
@@ -40,6 +41,16 @@ def get_task_status(task_id: str):
         row = cursor.fetchone()
         return row[0] if row else None
 
+def get_active_task_id(task_name: str) -> str | None:
+    """Checks if a task of the same name is already running."""
+    with sqlite3.connect("extraction_tasks.db") as conn:
+        cursor = conn.execute(
+            "SELECT task_id FROM tasks WHERE task_name = ? AND status IN ('pending', 'running')",
+            (task_name,)
+        )
+        row = cursor.fetchone()
+        return row[0] if row else None
+
 def run_background_extraction(task_id: str, extract_func, task_name: str):
     """Executes the extraction and updates the database upon completion."""
     update_task_status(task_id, task_name, "running")
@@ -55,6 +66,10 @@ def run_background_extraction(task_id: str, extract_func, task_name: str):
 
 @app.post("/extract/game-logs", status_code=202)
 def trigger_game_logs(background_tasks: BackgroundTasks):
+    active_id = get_active_task_id("game_logs")
+    if active_id:
+        return {"task_id": active_id, "status": "accepted", "message": "Extraction already running."}
+
     task_id = str(uuid.uuid4())
     update_task_status(task_id, "game_logs", "pending") # Pre-register to prevent Airflow race conditions
     background_tasks.add_task(run_background_extraction, task_id, game_logs.extract_stats, "game_logs")
@@ -62,6 +77,10 @@ def trigger_game_logs(background_tasks: BackgroundTasks):
 
 @app.post("/extract/player-info", status_code=202)
 def trigger_player_info(background_tasks: BackgroundTasks):
+    active_id = get_active_task_id("player_info")
+    if active_id:
+        return {"task_id": active_id, "status": "accepted", "message": "Extraction already running."}
+
     task_id = str(uuid.uuid4())
     update_task_status(task_id, "player_info", "pending")
     background_tasks.add_task(run_background_extraction, task_id, player_info.extract_player_info, "player_info")
@@ -69,6 +88,10 @@ def trigger_player_info(background_tasks: BackgroundTasks):
 
 @app.post("/extract/team-rosters", status_code=202)
 def trigger_team_rosters(background_tasks: BackgroundTasks):
+    active_id = get_active_task_id("team_rosters")
+    if active_id:
+        return {"task_id": active_id, "status": "accepted", "message": "Extraction already running."}
+
     task_id = str(uuid.uuid4())
     update_task_status(task_id, "team_rosters", "pending")
     background_tasks.add_task(run_background_extraction, task_id, team_rosters.extract_team_rosters, "team_rosters")
