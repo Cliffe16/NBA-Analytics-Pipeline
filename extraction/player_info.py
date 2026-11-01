@@ -1,4 +1,3 @@
-import os
 import time
 import logging
 import pandas as pd
@@ -80,6 +79,9 @@ def extract_player_info(write_disposition: str = "WRITE_APPEND", table_suffix: s
                         
                         if consecutive_failures >= 5:
                             raise RuntimeError("NBA API appears to be blocking requests") from e
+
+        if failed_ids:
+            logger.warning(f"Skipped {len(failed_ids)} players: {failed_ids}")
 
     except Exception as e:
         logger.error(f"Extraction interrupted: {str(e)}")
