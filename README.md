@@ -1,6 +1,6 @@
 # NBA Analytics Data Pipeline
 
-[![CI](https://github.com/Cliffe16/**NBA**-Analytics-Pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/Cliffe16/**NBA**-Analytics-Pipeline/actions/workflows/ci.yml) ![Python](https://img.shields.io/badge/python-3.12-blue) ![License](https://img.shields.io/badge/license-**MIT**-green)
+[![CI](https://github.com/Cliffe16/NBA-Analytics-Pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/Cliffe16/NBA-Analytics-Pipeline/actions/workflows/ci.yml) ![Python](https://img.shields.io/badge/python-3.12-blue) ![License](https://img.shields.io/badge/license-**MIT**-green)
 
 An automated **ELT** pipeline that extracts player, roster and game statistics from the **NBA** stats **API** (`stats.nba.com`), loads the raw data into **Google BigQuery**, and transforms it into a dimensional model and **MetricFlow** semantic layer for analytics.
 
@@ -40,41 +40,71 @@ Build an analytics platform that tracks NBA player and team performance across t
 
 ### Pipeline and execution flow
 
-```mermaid
-flowchart TB
-    subgraph **CLOUD**["Cloud orchestrator: Azure VM (**DAG** nba_analytics_pipeline, @daily)*]
-    T1[*extract_stats*] --> T2[*extract_team_roster*] --> T3[*extract_player_info*] --> T4[*transform_nba_data (Cosmos DbtTaskGroup)*]
-    end
 
-    subgraph **EDGE**[*Edge worker: Ubuntu node on a residential **ISP***]
-    **API**[*FastAPI (api.py)*]
-    DB[(*SQLite: extraction_tasks.db*)]
-    EX[*game_logs.py, team_rosters.py, player_info.py*]
-    **API** <--> DB
-    **API** -->|*BackgroundTasks*| EX
-    end
+# ```text
 
-    KV[*Azure Key Vault*]
-    **NBA**[*stats.nba.com*]
+#                                  1. CI/CD PIPELINE (GitHub Actions)
+    [ Git Push to main ]
+    │
+    ├──► Job 1: Run Unit Tests (ubuntu-latest)
+    │    └──► uv sync ──► uv run pytest test/ -v 
+    │
+    └──► Job 2: Deploy to Azure VM 
+    └──► **SSH** to Azure VM ──► git pull origin main
+    └──► sudo docker compose restart airflow-scheduler airflow-webserver
 
-    subgraph BQ[*Google BigQuery*]
-    **RAW**[***STAGING** dataset: raw_* tables + raw_*_history tables*]
-    **STG**[***STAGING** dataset: stg_* views*]
-    **INT**[*intermediate (ephemeral, no tables)*]
-    **MART**[***MART** dataset: facts, dimensions, time spine"]
-    **RAW** --> **STG** --> **INT** --> **MART**
-    end
+====================================================================================================
+#                            2. HYBRID CLOUD-TO-EDGE ELT PIPELINE ARCHITECTURE
+    ┌──────────────────────────────────────────────────────────────────────────────────────────────┐
+    │ **CLOUD** **ORCHESTRATOR**                                                                   │
+    │                                                                                              │
+    │   [Airflow Scheduler & Webserver] ──► **DAG**: nba_analytics_pipeline (@daily)               │
+    │         │                                                                                    │
+    │         ├──► 1. extract_stats                                                                │
+    │         ├──► 2. extract_team_roster                                                          │
+    │         ├──► 3. extract_player_info                                                          │
+    │         └──► 4. transform_nba_data                                                           │
+    └─────────────────────────┬───────────────────────────────────────────────────┬────────────────┘
+    │                                                                             │
+    Tailscale WireGuard Mesh **VPN                                                │
+    • **POST** /extract/{endpoint} ──► Returns **202** Accepted + task_id         │
+    • **GET**  /status/{task_id}   ◄── Polls every 10s until 'success'            │
+    │                                                                             │
+    ▼                                                                             │
+    ┌─────────────────────────────────────────────────────────────────────────┐   │
+    │ **LOCAL** **WORKER**: Ubuntu Node (Residential **ISP** — Bypasses Akamai **WAF**)  │   │
+    │                                                                         │   │
+    │   [FastAPI (api.py)] ◄──► [SQLite: extraction_tasks.db]                 │   │                                                               
+    │         │                                                               │   │
+    │         ├──► [Azure Key Vault: nba-kv-bqenv.vault.azure.net]            │   │                                                             
+    │         │                                                               │   │
+    │         └──► [BackgroundTasks: Extraction]                              │   │
+    │              ├──► game_logs.py    (PlayerGameLogs & LeagueGameFinder)   │   │
+    │              ├──► team_rosters.py (CommonTeamRoster + snapshot_date)    │   │
+    │              └──► player_info.py  (CommonPlayerInfo)                    │   │
+    └─────────────────────────────────────────┬───────────────────────────────┘   │
+    │                                                                             │
+    Bulk Load via `WRITE_TRUNCATE` (**2026**-27 Season)                             │ Cosmos compiles &
+    │                                                                             │ executes dbt **SQL**
+    ▼                                                                             ▼
+    ┌──────────────────────────────────────────────────────────────────────────────────────────────┐
+    │ **CLOUD** **DATA** **WAREHOUSE**: Google BigQuery                                            │
+    │                                                                                              │
+    │   [Dataset: raw] ──► History (24/25 & 25/26) + Daily Truncated Active Tables (**2026**-27)   │
+    │         │                                                                                    │
+    │         ▼                                                                                    │
+    │   [View: staging] ──► [Ephemeral: intermediate] ──► [Table: mart (Facts/Dims/Metrics)]       │
+    └──────────────────────────────────────────────────────────────────────────────────────────────┘
 
-    T1 & T2 & T3 -->|"**POST** /extract/{endpoint} returns **202** + task_id, then **GET** /status/{task_id} polled every 10 s over Tailscale*| **API**
-    KV -.->|***GCP** service account **JSON**, in memory*| EX
-    EX -->|***HTTP** requests*| **NBA**
-    EX -->|*WRITE_TRUNCATE, active season*| **RAW**
-    T4 -->|*dbt run + test"| **STG**
 ```
+
+---
 
 ![Airflow graph view: three extraction tasks followed by the Cosmos-generated dbt task group](docs/airflow_dag_graph.png)
 
 *Airflow graph view of a successful run: the three extraction tasks, then the `transform_nba_data` task group, with dbt models as Cosmos tasks (`run`, plus `test` where tests are defined).*
+
+---
 
 ### Warehouse layers
 
@@ -85,14 +115,6 @@ flowchart TB
 | Intermediate | none | `ephemeral` | Joins and SCD Type 2 history |
 | Mart | `MART` dataset | Tables | Facts, dimensions, time spine for BI and MetricFlow |
 
-### CI/CD
-
-```mermaid
-flowchart LR
-    **PUSH**[*Push / PR to main*] --> **TEST**["Job 1: unit tests (ubuntu-latest)<br/>uv sync, uv run pytest test/ -v*]
-    **TEST** -->|*push to main, tests pass*| **DEPLOY**[*Job 2: deploy to Azure VM over **SSH**<br/>git pull origin main, docker compose restart airflow-scheduler airflow-webserver"]
-```
-
 Static versions of the diagrams are in [`docs/`](docs/) (`pipeline_diagram.png`, `data_model_diagram.png`).
 
 ---
@@ -101,21 +123,69 @@ Static versions of the diagrams are in [`docs/`](docs/) (`pipeline_diagram.png`,
 
 A constellation (fact-constellation) schema: two fact tables sharing conformed dimensions. Surrogate keys for games, players and facts are `**STRING**`s; `team_key` and `date_key` are `**INT64**`.
 
-```mermaid
-erDiagram
-    dim_date ||--o{ fact_player_stats : date_key
-    dim_date ||--o{ fact_game_stats : date_key
-    dim_team ||--o{ fact_player_stats : team_key
-    dim_team ||--o{ fact_game_stats : *team_key, opponent_team_key*
-    dim_team ||--o{ dim_game : *home_key, away_key*
-    dim_game ||--o{ fact_player_stats : game_key
-    dim_game ||--o{ fact_game_stats : game_key
-    dim_player ||--o{ fact_player_stats : *player_key (**SCD2**)*
+---
+
+# ```text
+
+#                         CONSTELLATION SCHEMA (ENTITY-RELATIONSHIP DIAGRAM)
+    ┌──────────────────────────────┐               ┌──────────────────────────────┐
+    │           dim_date           │               │           dim_team           │
+    ├──────────────────────────────┤               ├──────────────────────────────┤
+    │ PK  date_key (**INT64**)     │               │     PK  team_key (**INT64**) │
+    │     date (**DATE**)          │               │     team_id (**INT64**)      │
+    │     day_of_week_num          │               │     team_abbreviation        │
+    │     month_name / quarter_num │               │     team_name                │
+    │     is_weekend / is_weekday  │               └──────────────┬───────────────┘
+    │     nba_season_end_year      │                              │
+    └──────────────┬───────────────┘                              │
+                   │                                              │
+    ├──────────────────────┐                       ├──────────────────────┐
+    │                      │                       │                      │
+    ▼                      ▼                       ▼                      ▼
+    ┌──────────────────────────────┐    ┌──────────────────────────────┐    ┌──────────────────────────────┐
+    │      fact_player_stats       │    │       fact_game_stats        │    │           dim_game           │
+    │  (Partitioned & Clustered)   │    │      (Team-Game Grain)       │    │     (Schedule & Matchup)     │
+    ├──────────────────────────────┤    ├──────────────────────────────┤    ├──────────────────────────────┤
+    │ PK  player_fact_key          │    │ PK  fact_key                 │    │ PK  game_key                 │
+    │ FK  game_key ────────────────┼───►│ FK  game_key ────────────────┼───►│     game_id                  │
+    │ FK  player_key ──────┐       │    │ FK  team_key                 │    │     game_date                │
+    │ FK  team_key         │       │    │ FK  opponent_team_key        │    │     season                   │
+    │ FK  date_key         │       │    │ FK  date_key                 │    │     season_stage             │
+    │     season_game_number       │    │     points_scored            │    │ FK  home_key                 │
+    │     minutes_played / points  │    │     points_allowed           │    │ FK  away_key                 │
+    │     rebounds / assists / etc │    │     field_goals_pct / 3p_pct │    └──────────────────────────────┘
+    │     true_shooting_pct        │    │     total_rebounds / assists │
+    │     game_score               │    │     steals / blocks / tov    │
+    │     is_season_high_* (Flags) │    │     is_win                   │
+    └──────────────────────────────┘    └──────────────────────────────┘
+    │
+    │ SCD2 Join:
+    │ (game_date >= effective_start_date
+    │  **AND** game_date < effective_end_date)
+    ▼
+    ┌──────────────────────────────┐
+    │     dim_player (SCD Type 2)  │
+    ├──────────────────────────────┤
+    │ PK  player_key               │
+    │     player_id (Natural Key)  │
+    │     player_name              │
+    │     team_id / position       │
+    │     height_inches / weight   │
+    │     school / country / draft │
+    │     effective_start_date     │
+    │     effective_end_date       │
+    │     is_current               │
+    └──────────────────────────────┘
+
 ```
 
-`dim_game.home_key` and `away_key` reference `dim_team.team_key`. `dim_player` is a Slowly Changing Dimension (Type 2). Facts resolve to the correct player version with a date-range join on the natural key:
+---
 
-```sql game_date >= effective_start_date **AND** game_date < effective_end_date ```
+`dim_game.home_key` and `away_key` reference `dim_team.team_key`. 
+`dim_player` is a Slowly Changing Dimension (Type 2). 
+Facts resolve to the correct player version with a date-range join on the natural key:
+
+    ```sql game_date >= effective_start_date **AND** game_date < effective_end_date ```
 
 Column-level detail is in the [Data dictionary](#data-dictionary).
 
@@ -138,8 +208,85 @@ Column-level detail is in the [Data dictionary](#data-dictionary).
 ---
 
 ## Repository Structure
+---
 
-```text **NBA**-Analytics-Pipeline/ ├── .github/ │   └── workflows/ │       └── ci.yml                       # GitHub Actions CI/CD (uv + pytest + **SSH** deploy) ├── airflow/                             # Cloud orchestration │   ├── dags/ │   │   ├── config.py                    # Dynamic project path injection │   │   └── nba_analytics_pipeline.py    # **DAG** (async polling & Cosmos DbtTaskGroup) │   └── webserver_config.py ├── docs/                                # Project documentation & architecture diagrams │   ├── case_study.md │   ├── data_model_diagram.png │   └── pipeline_diagram.png ├── extraction/                          # Edge-worker extraction scripts │   ├── __init__.py │   ├── config.py                        # Azure Key Vault secret fetcher & **API** settings │   ├── game_logs.py                     # PlayerGameLogs & LeagueGameFinder extraction │   ├── player_info.py                   # Stateful CommonPlayerInfo delta extraction │   ├── team_rosters.py                  # CommonTeamRoster extraction with snapshot_date │   └── utils.py                         # In-memory BigQuery client & WRITE_TRUNCATE loader ├── nba_analytics/                       # dbt project (BigQuery transformations) │   ├── analyses/ │   ├── macros/ │   │   └── get_custom_schema.sql        # Custom schema name override macro │   ├── models/ │   │   ├── staging/                     # Views unioning _history & daily tables + dedup │   │   │   ├── _sources.yml │   │   │   ├── _staging_models.yml │   │   │   ├── stg_player_game_logs.sql │   │   │   ├── stg_player_info.sql │   │   │   ├── stg_team_game_results.sql │   │   │   └── stg_team_rosters.sql │   │   ├── intermediate/                # Ephemeral models for joins & **SCD** Type 2 history │   │   │   ├── int_game_results.sql │   │   │   └── int_player_team_history.sql │   │   └── marts/                       # Materialized dimensional models & MetricFlow │   │       ├── _marts_models.yml │   │       ├── dim_date.sql │   │       ├── dim_game.sql │   │       ├── dim_player.sql │   │       ├── dim_team.sql │   │       ├── fact_game_stats.sql │   │       ├── fact_player_stats.sql │   │       ├── metricflow_time_spine.sql │   │       ├── metrics.yml │   │       └── semantic_models.yml │   ├── seeds/ │   ├── snapshots/ │   ├── tests/                           # Singular & generic dbt data quality tests │   │   ├── generic/ │   │   │   ├── assert_data_freshness.sql │   │   │   ├── test_is_positive.sql │   │   │   └── valid_season_date.sql │   │   ├── valid_active_date_ranges.sql │   │   ├── valid_game_date.sql │   │   └── valid_shooting_pct.sql │   ├── dbt_project.yml │   ├── package-lock.yml │   └── packages.yml                     # dbt-labs/dbt_utils dependency ├── test/                                # Unit & **API** verification tests │   ├── __init__.py │   ├── test_api.py                      # Pytest suite for FastAPI **202** Accepted polling │   ├── test_extract_game_logs.py │   ├── test_utils.py │   └── verify_api.py ├── .gitignore ├── .python-version                      # Python 3.12 ├── api.py                               # Async FastAPI worker with SQLite task tracking ├── docker-compose.yml                   # LocalExecutor Airflow stack with concurrency limits ├── Dockerfile                           # Custom Airflow 2.10.0-python3.12 image ├── **LICENSE** ├── pyproject.toml                       # uv project configuration & dependencies ├── requirements.txt ├── uv.lock                              # Deterministic uv dependency lockfile └── **README**.md ```
+```text
+NBA-Analytics-Pipeline/
+├── .github/
+│   └── workflows/
+│       └── ci.yml                       # GitHub Actions CI/CD (uv + pytest + SSH deploy)
+├── airflow/                             # Cloud orchestration
+│   ├── dags/
+│   │   ├── config.py                    # Dynamic project path injection
+│   │   └── nba_analytics_pipeline.py    # DAG (async polling & Cosmos DbtTaskGroup)
+│   └── webserver_config.py
+├── docs/                                # Project documentation & architecture diagrams
+│   ├── case_study.md
+│   ├── data_model_diagram.png
+│   └── pipeline_diagram.png
+├── extraction/                          # Edge-worker extraction scripts
+│   ├── __init__.py
+│   ├── config.py                        # Azure Key Vault secret fetcher & API settings
+│   ├── game_logs.py                     # PlayerGameLogs & LeagueGameFinder extraction
+│   ├── player_info.py                   # Stateful CommonPlayerInfo delta extraction
+│   ├── team_rosters.py                  # CommonTeamRoster extraction with snapshot_date
+│   └── utils.py                         # In-memory BigQuery client & WRITE_TRUNCATE loader
+├── nba_analytics/                       # dbt project (BigQuery transformations)
+│   ├── analyses/
+│   ├── macros/
+│   │   └── get_custom_schema.sql        # Custom schema name override macro
+│   ├── models/
+│   │   ├── staging/                     # Views unioning _history & daily tables + dedup
+│   │   │   ├── _sources.yml
+│   │   │   ├── _staging_models.yml
+│   │   │   ├── stg_player_game_logs.sql
+│   │   │   ├── stg_player_info.sql
+│   │   │   ├── stg_team_game_results.sql
+│   │   │   └── stg_team_rosters.sql
+│   │   ├── intermediate/                # Ephemeral models for joins & SCD Type 2 history
+│   │   │   ├── int_game_results.sql
+│   │   │   └── int_player_team_history.sql
+│   │   └── marts/                       # Materialized dimensional models & MetricFlow
+│   │       ├── _marts_models.yml
+│   │       ├── dim_date.sql
+│   │       ├── dim_game.sql
+│   │       ├── dim_player.sql
+│   │       ├── dim_team.sql
+│   │       ├── fact_game_stats.sql
+│   │       ├── fact_player_stats.sql
+│   │       ├── metricflow_time_spine.sql
+│   │       ├── metrics.yml
+│   │       └── semantic_models.yml
+│   ├── seeds/
+│   ├── snapshots/
+│   ├── tests/                           # Singular & generic dbt data quality tests
+│   │   ├── generic/
+│   │   │   ├── assert_data_freshness.sql
+│   │   │   ├── test_is_positive.sql
+│   │   │   └── valid_season_date.sql
+│   │   ├── valid_active_date_ranges.sql
+│   │   ├── valid_game_date.sql
+│   │   └── valid_shooting_pct.sql
+│   ├── dbt_project.yml
+│   ├── package-lock.yml
+│   └── packages.yml                     # dbt-labs/dbt_utils dependency
+├── test/                                # Unit & API verification tests
+│   ├── __init__.py
+│   ├── test_api.py                      # Pytest suite for FastAPI 202 Accepted polling
+│   ├── test_extract_game_logs.py
+│   ├── test_utils.py
+│   └── verify_api.py
+├── .gitignore
+├── .python-version                      # Python 3.12
+├── api.py                               # Async FastAPI worker with SQLite task tracking
+├── docker-compose.yml                   # LocalExecutor Airflow stack with concurrency limits
+├── Dockerfile                           # Custom Airflow 2.10.0-python3.12 image
+├── LICENSE
+├── pyproject.toml                       # uv project configuration & dependencies
+├── requirements.txt
+├── uv.lock                              # Deterministic uv dependency lockfile
+└── README.md
+```
 
 ---
 
@@ -193,17 +340,20 @@ Install Tailscale and join the mesh network, then install dependencies:
 
 Run the FastAPI worker as an always-on `systemd` service (`sudo nano /etc/systemd/system/nba-extraction.service`):
 
-```ini [Unit] Description=**NBA** Local Extraction **API** (Tailscale Connection) After=network.target
+```ini 
+[Unit] Description=**NBA** Local Extraction **API** (Tailscale Connection) After=network.target
 
 [Service] User=<user> WorkingDirectory=/path/to/**NBA**-Analytics-Pipeline ExecStart=/path/to/uv run uvicorn api:app --host 0.0.0.0 --port **8000** Restart=always RestartSec=3
 
-[Install] WantedBy=multi-user.target ```
+[Install] WantedBy=multi-user.target 
+
+```
 
 Set `ExecStart` to the absolute path printed by `command -v uv`. If the path is wrong, systemd fails with `status=**203**/**EXEC**` and keeps restarting the unit.
 
 Enable and start it:
 
-```bash sudo systemctl daemon-reload sudo systemctl enable nba-extraction sudo systemctl start nba-extraction ```
+```bash sudo systemctl daemon-reload sudo systemctl enable nba-extraction sudo systemctl start nba-extraction```
 
 ### 4. Configuration
 
@@ -212,7 +362,7 @@ Enable and start it:
 | Key Vault secret | Fallback env var | Purpose |
 |---|---|---|
 | `GCP-PROJECT-ID` | `GCP_PROJECT_ID` | BigQuery project |
-| `GCP-SERVICE-ACCOUNT` | `GCP_SERVICE_ACCOUNT` | Service account JSON, parsed in memory |
+| `GCP-SERVICE-ACCOUNT` | `GCP_SERVICE_ACCOUNT` | Service account JSON, parsed in memory |  
 | `STAGING-DATASET` | `STAGING_DATASET` | Dataset holding the `raw_*` tables and `stg_*` views |
 | `ALERT-EMAIL` | `ALERT_EMAIL` | Address for Airflow failure emails (unused unless SMTP is configured) |
 
