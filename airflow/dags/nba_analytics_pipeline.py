@@ -86,19 +86,22 @@ with DAG(
         task_extract_stats = PythonOperator(
             task_id='extract_stats',
             python_callable=trigger_and_poll,
-            op_kwargs={'endpoint': '/extract/game-logs'}
+            op_kwargs={'endpoint': '/extract/game-logs'},
+            execution_timeout=timedelta(hours=2)
         )
 
         task_extract_player_info = PythonOperator(
             task_id='extract_player_info',
             python_callable=trigger_and_poll,
-            op_kwargs={'endpoint': '/extract/player-info'}
+            op_kwargs={'endpoint': '/extract/player-info'},
+            execution_timeout=timedelta(hours=2)
         )
 
         task_extract_team_roster = PythonOperator(
             task_id='extract_team_roster',
             python_callable=trigger_and_poll,
-            op_kwargs={'endpoint': '/extract/team-rosters'}
+            op_kwargs={'endpoint': '/extract/team-rosters'},
+            execution_timeout=timedelta(hours=2)
         )
 
         task_transform_data = DbtTaskGroup(
