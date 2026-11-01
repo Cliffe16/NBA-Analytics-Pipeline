@@ -14,9 +14,6 @@ project_root = os.getcwd()
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from extraction.game_logs import extract_stats
-from extraction.player_info import extract_player_info
-from extraction.team_rosters import extract_team_rosters
 from extraction import config
 
 load_dotenv()
