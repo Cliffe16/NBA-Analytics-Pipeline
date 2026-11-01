@@ -35,7 +35,7 @@ def db_load(df: pd.DataFrame, table_name: str, write_disposition: str = "WRITE_T
 
     # Inject execution timestamp for downstream deduping
     df = df.copy()
-    df["LOADED_AT"] = pd.Timestamp.utcnow()
+    df["LOADED_AT"] = pd.Timestamp.now(tz="UTC")
 
     # Overwrite staging tables daily to prevent bloat
     job_config = bigquery.LoadJobConfig(
