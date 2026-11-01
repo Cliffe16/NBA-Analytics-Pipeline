@@ -31,7 +31,7 @@ def db_load(df: pd.DataFrame, table_name: str, write_disposition: str = "WRITE_T
     target_table = f"{table_name}{table_suffix}"
 
     # Construct the full table ID
-    table_id = f"{GCP_PROJECT_ID}.{STAGING_DATASET}.{table_name}"
+    table_id = f"{GCP_PROJECT_ID}.{STAGING_DATASET}.{target_table}"
 
     # Inject execution timestamp for downstream deduping
     df = df.copy()
