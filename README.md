@@ -71,12 +71,19 @@ flowchart TB
     EX -->|"WRITE_TRUNCATE, active season"| RAW
     T4 -->|"dbt run + test"| STG
 ```
+---
+
+Airflow Graph:
  
 ![Airflow graph view: three extraction tasks followed by the Cosmos-generated dbt task group](docs/airflow_dag_graph.png)
  
 *Airflow graph view of a successful run: the three extraction tasks, then the `transform_nba_data` task group, with dbt models as Cosmos tasks (`run`, plus `test` where tests are defined).*
+
+---
  
 ### Warehouse layers
+
+---
  
 | Layer | Location | Materialization | Purpose |
 |---|---|---|---|
@@ -84,8 +91,12 @@ flowchart TB
 | Staging | `STAGING` dataset: `stg_*` | Views | Union history and daily tables, rename, cast, deduplicate |
 | Intermediate | none | `ephemeral` | Joins and SCD Type 2 history |
 | Mart | `MART` dataset | Tables | Facts, dimensions, time spine for BI and MetricFlow |
+
+---
  
 ### CI/CD
+
+---
  
 ```mermaid
 flowchart LR
@@ -113,7 +124,9 @@ erDiagram
     dim_player ||--o{ fact_player_stats : "player_key (SCD2)"
 ```
  
-`dim_game.home_key` and `away_key` reference `dim_team.team_key`. `dim_player` is a Slowly Changing Dimension (Type 2). Facts resolve to the correct player version with a date-range join on the natural key:
+`dim_game.home_key` and `away_key` reference `dim_team.team_key`. 
+`dim_player` is a Slowly Changing Dimension (Type 2). 
+Facts resolve to the correct player version with a date-range join on the natural key:
  
 ```sql
 game_date >= effective_start_date AND game_date < effective_end_date
@@ -226,16 +239,22 @@ NBA-Analytics-Pipeline/
 
 1. **Scheduled trigger:** Airflow, running on the Azure VM, triggers the `nba_analytics_pipeline` **DAG** daily (`@daily`, which is 00:00 **UTC** or 03:00 **EAT**).
 
-2. **Remote trigger:** Airflow uses a `PythonOperator` and `HttpHook` to send an **HTTP** `**POST**` across the Tailscale private network to the local FastAPI worker. FastAPI registers a **UUID** `task_id` as `pending` in SQLite, dispatches the extraction in a background task via `BackgroundTasks`, and immediately returns `**HTTP** **202** Accepted`. If an extraction of the same type is already `pending` or `running`, the worker returns that task's ID instead of starting a second run.
+2. **Remote trigger:** Airflow uses a `PythonOperator` and `HttpHook` to send an **HTTP** `**POST**` across the Tailscale private network to the local FastAPI worker. FastAPI registers a **UUID** `task_id` as `pending` in SQLite, dispatches the extraction in a background task via `BackgroundTasks`, and immediately returns `**HTTP** **202** Accepted`. 
+If an extraction of the same type is already `pending` or `running`, the worker returns that task's ID instead of starting a second run.
 
-3. **Extraction:** The local Ubuntu worker retrieves BigQuery service account credentials from Azure Key Vault and initializes the BigQuery client in memory. Because outbound requests to the API originate from a residential ISP, the Akamai WAF permits the connection. The three extraction tasks run in sequence, because `extract_player_info` builds its worklist from the `team_roster` and `game_logs` tables that the earlier tasks have just loaded:
+3. **Extraction:** The local Ubuntu worker retrieves BigQuery service account credentials from Azure Key Vault and initializes the BigQuery client in memory. Because outbound requests to the API originate from a residential ISP, the Akamai WAF permits the connection. 
+The three extraction tasks run in sequence, because `extract_player_info` builds its worklist from the `team_roster` and `game_logs` tables that the earlier tasks have just loaded:
     - `game_logs.py`: two bulk calls (`PlayerGameLogs`, `LeagueGameFinder`) for the active season, Regular Season only.
     - `team_rosters.py`: one `CommonTeamRoster` call per team with a 0.6 s delay between calls, plus a `SNAPSHOT_DATE` column.
     - `player_info.py`: delta extraction. It queries BigQuery for players in the roster and game-log tables that are not yet in `raw_player_info`, then calls `CommonPlayerInfo` for each one (1.5 s delay, up to 3 attempts per player). A player that fails all 3 attempts is skipped and retried on the next run, because it is still missing from `raw_player_info`. 5 failures in a row abort the task, since that means the API is blocking requests. Results are saved even when the task aborts.
 
-4. **Direct BigQuery load:** The worker turns each JSON response into a Pandas DataFrame and loads it into the `raw_*` tables of the `**STAGING**` dataset with `WRITE_TRUNCATE`, so repeated runs do not accumulate duplicate season-to-date rows. The exception is `raw_player_info`, which is appended to (`WRITE_APPEND`) because only players not yet loaded are fetched. Every load adds a `LOADED_AT` UTC timestamp so staging models can deduplicate on the real load time (for example, `stg_player_info` keeps the latest row per player). Completed seasons are kept in `raw_*_history` tables (see [Season rollover](#operations-season-rollover)).
+4. **Direct BigQuery load:** The worker turns each JSON response into a Pandas DataFrame and loads it into the `raw_*` tables of the `**STAGING**` dataset with `WRITE_TRUNCATE` so repeated runs do not accumulate duplicate season-to-date rows. 
+The exception is `raw_player_info`, which is appended to (`WRITE_APPEND`) because only players not yet loaded are fetched. 
+Every load adds a `LOADED_AT` UTC timestamp so staging models can deduplicate on the real load time (for example, `stg_player_info` keeps the latest row per player). 
+Completed seasons are kept in `raw_*_history` tables (see [Season rollover](#operations-season-rollover)).
 
-5. **Status polling:** Airflow polls `**GET** /status/{task_id}` every 10 seconds over Tailscale until the SQLite state becomes `success`, or raises an `AirflowException` on `failed`. Each extraction task has a 2-hour `execution_timeout`. When the worker starts, it marks any `pending` or `running` task left over from a crash as `failed: worker restarted`, so Airflow retries instead of polling a dead task.
+5. **Status polling:** Airflow polls `**GET** /status/{task_id}` every 10 seconds over Tailscale until the SQLite state becomes `success`, or raises an `AirflowException` on `failed`. 
+Each extraction task has a 2-hour `execution_timeout`. When the worker starts, it marks any `pending` or `running` task left over from a crash as `failed: worker restarted`, so Airflow retries instead of polling a dead task.
 
 6. **Transformation:** Once all three extraction tasks succeed, Airflow starts the `transform_nba_data` `DbtTaskGroup`. Astronomer Cosmos compiles and runs the dbt models and data tests inside BigQuery. The `stg_*` views union the history and daily tables, and the mart tables are built as partitioned, clustered dimensional models ready for BI consumption.
 
@@ -298,9 +317,11 @@ Enable and start it:
 | `STAGING-DATASET` | `STAGING_DATASET` | Dataset holding the `raw_*` tables and `stg_*` views |
 | `ALERT-EMAIL` | `ALERT_EMAIL` | Address for Airflow failure emails (unused unless SMTP is configured) |
 
-Set `VAULT_URL` in `extraction/config.py` to your own vault. Other settings live in the same file: `**SEASON**`, `SEASON_TYPE` (`Regular Season`), `LEAGUE_ID` and `API_DELAY`. Without a service account **JSON**, the BigQuery client falls back to Application Default Credentials.
+Set `VAULT_URL` in `extraction/config.py` to your own vault. Other settings live in the same file: `**SEASON**`, `SEASON_TYPE` (`Regular Season`), `LEAGUE_ID` and `API_DELAY`. 
+Without a service account JSON, the BigQuery client falls back to Application Default Credentials.
 
-`DefaultAzureCredential` authenticates the worker to Key Vault: either set `AZURE_CLIENT_ID`, `AZURE_TENANT_ID` and `AZURE_CLIENT_SECRET` for a service principal, or run the worker as a user with a valid `az login` session. Secrets are read when the worker starts, so if the credential is missing or expired and no fallback variables are set, the worker fails at startup. `extraction/config.py` does not load a `.env` file itself, so fallback variables must be in the worker's process environment (for example via `EnvironmentFile=` in the systemd unit).
+`DefaultAzureCredential` authenticates the worker to Key Vault: either set `AZURE_CLIENT_ID`, `AZURE_TENANT_ID` and `AZURE_CLIENT_SECRET` for a service principal, or run the worker as a user with a valid `az login` session. 
+Secrets are read when the worker starts, so if the credential is missing or expired and no fallback variables are set, the worker fails at startup. `extraction/config.py` does not load a `.env` file itself, so fallback variables must be in the worker's process environment (for example via `EnvironmentFile=` in the systemd unit).
 
 ### 5. CI/CD
 
@@ -357,7 +378,7 @@ In v1, daily `WRITE_APPEND` loads duplicated the full season-to-date payload eve
 - Applies rolling 7-day filters in the `dev` target to limit bytes scanned during development.
 
 
-### 4. Unannounced API column changes → automated schema-drift handling
+### 4. API column changes → automated schema-drift handling
 
 `dbt_utils.union_relations` in `stg_team_rosters.sql` inspects `INFORMATION_SCHEMA` and aligns mismatched columns between historical (17 columns) and active-season (18 columns) payloads, replacing a static `**SELECT** *` / `**UNION** **ALL**`.
 
