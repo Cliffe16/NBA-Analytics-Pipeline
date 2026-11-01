@@ -4,7 +4,6 @@ from google.cloud import bigquery
 from google.oauth2 import service_account
 from extraction.config import GCP_PROJECT_ID, STAGING_DATASET, GCP_SERVICE_ACCOUNT_JSON
 from extraction import config
-from airflow.hooks.base import BaseHook
 import pandas as pd
 import json
 
@@ -25,19 +24,29 @@ def get_bq_client() -> bigquery.Client:
         # Fallback for local development using Application Default Credentials
         return bigquery.Client(project=GCP_PROJECT_ID)
 
-def db_load(df: pd.DataFrame, table_name: str) -> None:
+def db_load(df: pd.DataFrame, table_name: str, write_disposition: str = "WRITE_TRUNCATE", table_suffix: str = "") -> None:
     """Bulk loads a pandas dataframe into BigQuery"""
     client = get_bq_client()
+
+    target_table = f"{table_name}{table_suffix}"
 
     # Construct the full table ID
     table_id = f"{GCP_PROJECT_ID}.{STAGING_DATASET}.{table_name}"
 
+    # Inject execution timestamp for downstream deduping
+    df = df.copy()
+    df["LOADED_AT"] = pd.Timestamp.utcnow()
+
     # Overwrite staging tables daily to prevent bloat
     job_config = bigquery.LoadJobConfig(
-        write_disposition="WRITE_TRUNCATE",
+        write_disposition=write_disposition,
     )
 
-    logger.info(f"Uploading {len(df)} rows to {table_id}...")
+    # Allow new columns from the API to be appended automatically
+    if write_disposition == "WRITE_APPEND":
+        job_config.schema_update_options = [bigquery.SchemaUpdateOption.ALLOW_FIELD_ADDITION]
+
+    logger.info(f"{write_disposition}: Uploading {len(df)} rows to {table_id}...")
 
     # Execute the asynchronous load job
     job = client.load_table_from_dataframe(
