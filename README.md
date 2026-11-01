@@ -382,13 +382,14 @@ The deploy job needs three repository secrets: `AZURE_HOST`, `AZURE_USER` and `A
 ---
 
 ## Operations: Season Rollover
-
+ 
 Completed seasons are archived into the `raw_*_history` tables (`raw_player_game_logs_history`, `raw_team_game_results_history`, `raw_team_rosters_history`); `raw_player_info` has no history table. Archiving is currently a manual procedure:
-
-## In `extraction/config.py`, set `SEASON` to the season being archived.
-
-## Append the `_history` suffix to the table names being loaded, and in `extraction/utils.py` change the load from `WRITE_TRUNCATE` to `WRITE_APPEND`. ## Restart the worker: `sudo systemctl restart nba-extraction`. ## Trigger the `nba_analytics_pipeline` DAG. ## Revert the table names and load mode, set `SEASON` to the new season, and restart the worker again.
-
+ 
+1. In `extraction/config.py`, set `SEASON` to the season being archived.
+2. Append the `_history` suffix to the table names being loaded, and in `extraction/utils.py` change the load from `WRITE_TRUNCATE` to `WRITE_APPEND`.
+3. Restart the worker: `sudo systemctl restart nba-extraction`.
+4. Trigger the `nba_analytics_pipeline` DAG.
+5. Revert the table names and load mode, set `SEASON` to the new season, and restart the worker again.
 Run the archive once per season: because it uses `WRITE_APPEND`, repeating it duplicates rows in the history tables.
 
 ---
