@@ -36,17 +36,17 @@ season_highs AS(
 		-- Determine season highs with boolean flags
 		-- points
 		CASE 
-			WHEN points = MAX(points) OVER (PARTITION BY player_id, season) THEN TRUE
+			WHEN points = MAX(points) OVER (PARTITION BY player_id, season) AND points > 0 THEN TRUE
 			ELSE FALSE
 		END AS is_season_high_points,
 		-- rebounds
 		CASE 
-			WHEN total_rebounds = MAX(total_rebounds) OVER (PARTITION BY player_id, season) THEN TRUE 
+			WHEN total_rebounds = MAX(total_rebounds) OVER (PARTITION BY player_id, season) AND total_rebounds > 0 THEN TRUE 
 			ELSE FALSE 
 		END AS is_season_high_rebounds,
 		-- assists
 		CASE 
-			WHEN assists = MAX(assists) OVER (PARTITION BY player_id, season) THEN TRUE 
+			WHEN assists = MAX(assists) OVER (PARTITION BY player_id, season) AND assists > 0 THEN TRUE 
 			ELSE FALSE 
 		END AS is_season_high_assists,
 		--blocks
@@ -56,22 +56,22 @@ season_highs AS(
                 END AS is_season_high_blocks,
 		-- fouls
 		CASE 
-                        WHEN personal_fouls = MAX(personal_fouls) OVER (PARTITION BY player_id, season) THEN TRUE 
+                        WHEN personal_fouls = MAX(personal_fouls) OVER (PARTITION BY player_id, season) AND personal_fouls > 0 THEN TRUE 
                         ELSE FALSE 
                 END AS is_season_high_fouls,
 		-- steals
 		CASE 
-                        WHEN steals = MAX(steals) OVER (PARTITION BY player_id, season) THEN TRUE 
+                        WHEN steals = MAX(steals) OVER (PARTITION BY player_id, season) AND steals > 0 THEN TRUE 
                         ELSE FALSE 
                 END AS is_season_high_steals,
 		-- three pointers made
 		CASE 
-                        WHEN three_pointers_made = MAX(three_pointers_made) OVER (PARTITION BY player_id, season) THEN TRUE 
+                        WHEN three_pointers_made = MAX(three_pointers_made) OVER (PARTITION BY player_id, season) AND three_pointers_made > 0 THEN TRUE 
                         ELSE FALSE 
                 END AS is_season_high_3p,
 		-- turnovers
 		CASE 
-                        WHEN turnovers = MAX(turnovers) OVER (PARTITION BY player_id, season) THEN TRUE 
+                        WHEN turnovers = MAX(turnovers) OVER (PARTITION BY player_id, season) AND turnovers > 0 THEN TRUE 
                         ELSE FALSE 
                 END AS is_season_high_turnovers
 	FROM metrics
