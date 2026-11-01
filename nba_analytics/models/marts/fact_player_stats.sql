@@ -51,7 +51,7 @@ season_highs AS(
 		END AS is_season_high_assists,
 		--blocks
 		CASE 
-                        WHEN blocks = MAX(blocks) OVER (PARTITION BY player_id, season) THEN TRUE 
+                        WHEN blocks = MAX(blocks) OVER (PARTITION BY player_id, season) AND blocks > 0 THEN TRUE 
                         ELSE FALSE 
                 END AS is_season_high_blocks,
 		-- fouls
