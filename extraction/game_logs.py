@@ -13,14 +13,18 @@ def extract_stats():
         logger.info("Extracting Player Stats...")
         player_stats = playergamelogs.PlayerGameLogs(
             season_nullable=config.SEASON, 
-            season_type_nullable=config.SEASON_TYPE)
+            season_type_nullable=config.SEASON_TYPE,
+            timeout=60
+            )
         db_load(player_stats.get_data_frames()[0], config.PLAYER_STATS_TABLE)
 
         logger.info("Extracting Team Game Results...")
         game_stats = leaguegamefinder.LeagueGameFinder(
             season_nullable=config.SEASON, 
             season_type_nullable=config.SEASON_TYPE, 
-            league_id_nullable=config.LEAGUE_ID)
+            league_id_nullable=config.LEAGUE_ID,
+            timeout=60
+            )
         db_load(game_stats.get_data_frames()[0], config.GAME_STATS_TABLE)
         
     except Exception as e:
