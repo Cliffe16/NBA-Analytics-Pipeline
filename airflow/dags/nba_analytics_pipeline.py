@@ -112,7 +112,9 @@ with DAG(
             execution_config=ExecutionConfig(
                 dbt_executable_path=DBT_EXECUTABLE_PATH
             ),
-            test_behavior=TestBehavior.AFTER_ALL
+            render_config=RenderConfig(
+                test_behavior=TestBehavior.AFTER_ALL
+            )
         )
 
         task_extract_stats >> task_extract_team_roster >> task_extract_player_info >> task_transform_data
