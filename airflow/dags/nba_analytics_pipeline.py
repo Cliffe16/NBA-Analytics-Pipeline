@@ -4,6 +4,7 @@ from airflow.providers.http.hooks.http import HttpHook
 from airflow.exceptions import AirflowException
 from cosmos import DbtTaskGroup, ProjectConfig, ProfileConfig, ExecutionConfig
 from cosmos.profiles.bigquery import GoogleCloudServiceAccountFileProfileMapping
+from cosmos.constants import TestBehavior
 from datetime import datetime, timedelta
 import sys 
 import os
@@ -111,6 +112,7 @@ with DAG(
             execution_config=ExecutionConfig(
                 dbt_executable_path=DBT_EXECUTABLE_PATH
             ),
+            test_behavior=TestBehavior.AFTER_ALL
         )
 
         task_extract_stats >> task_extract_team_roster >> task_extract_player_info >> task_transform_data
