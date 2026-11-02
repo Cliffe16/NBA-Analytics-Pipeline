@@ -2,7 +2,7 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.http.hooks.http import HttpHook
 from airflow.exceptions import AirflowException
-from cosmos import DbtTaskGroup, ProjectConfig, ProfileConfig, ExecutionConfig
+from cosmos import DbtTaskGroup, ProjectConfig, ProfileConfig, ExecutionConfig, RenderConfig
 from cosmos.profiles.bigquery import GoogleCloudServiceAccountFileProfileMapping
 from cosmos.constants import TestBehavior
 from datetime import datetime, timedelta
