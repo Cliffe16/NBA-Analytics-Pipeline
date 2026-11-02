@@ -1,16 +1,16 @@
 WITH historical_source AS (
-    SELECT * FROM {{ source('raw', 'raw_player_game_logs_history') }}
+    {{ dbt_utils.union_relations(
+        relations=[
+            source('raw', 'raw_player_game_logs_history'),
+            source('raw', 'raw_player_game_logs')
+        ]
+    ) }}
 ),
-daily_source AS (
+source AS (
     SELECT * FROM {{ source('raw', 'raw_player_game_logs') }}
     {% if target.name == 'dev' %}
     WHERE SAFE.PARSE_DATE('%Y-%m-%d', SUBSTR(GAME_DATE, 1, 10)) >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
     {% endif %}
-), 
-source AS(
-    SELECT * FROM historical_source
-    UNION ALL
-    SELECT * FROM daily_source
 ),
 -- Convert Uppercase column names to Snake case
 cleaned AS(
@@ -56,7 +56,9 @@ cleaned AS(
 		CAST(COALESCE(TOV, 0) AS INT64) AS turnovers,
 		CAST(COALESCE(PF, 0) AS INT64) AS personal_fouls,
 		CAST(COALESCE(PTS, 0) AS INT64) AS points,
-		CAST(PLUS_MINUS AS INT64) AS plus_minus
+		CAST(PLUS_MINUS AS INT64) AS plus_minus,
+        --Metadata
+        COALESCE(SAFE_CAST(LOADED_AT AS TIMESTAMP), TIMESTAMP('1970-01-01')) AS loaded_at
 	FROM source
 	WHERE GAME_ID IS NOT NULL
 		AND PLAYER_ID IS NOT NULL

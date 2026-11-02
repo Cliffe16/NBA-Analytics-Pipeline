@@ -1,18 +1,17 @@
 WITH historical_source AS (
-    SELECT * FROM {{ source('raw', 'raw_team_game_results_history') }}
+    {{ dbt_utils.union_relations(
+        relations=[
+            source('raw', 'raw_team_game_results_history'),
+            source('raw', 'raw_team_game_results')
+        ]
+    ) }}
 ),
-daily_source AS (
+source AS (
     SELECT * FROM {{ source('raw', 'raw_team_game_results') }}
     {% if target.name == 'dev' %}
     WHERE SAFE.PARSE_DATE('%Y-%m-%d', SUBSTR(GAME_DATE, 1, 10)) >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
     {% endif %}
 ),
-source AS (
-    SELECT * FROM historical_source
-    UNION ALL
-    SELECT * FROM daily_source
-),
-
 cleaned AS(
 	SELECT
         	-- IDs
@@ -60,7 +59,6 @@ cleaned AS(
         	CAST(COALESCE(TOV, 0) AS INT64) AS turnovers,
         	CAST(COALESCE(PF, 0) AS INT64) AS personal_fouls,
         	CAST(PLUS_MINUS AS INT64) AS plus_minus,
-
         	-- Metadata
         	COALESCE(SAFE_CAST(LOADED_AT AS TIMESTAMP), TIMESTAMP('1970-01-01')) AS loaded_at
     FROM source
