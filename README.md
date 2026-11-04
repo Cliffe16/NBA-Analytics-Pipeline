@@ -398,6 +398,9 @@ The worker pulls the **GCP** service account **JSON** from Azure Key Vault (`Def
 
 Astronomer Cosmos (`DbtTaskGroup`) runs dbt inside Airflow. The **DAG** retries each task 3 times at 10-minute intervals and uses `max_active_runs=1` so runs never overlap. A `uv` + `pytest` GitHub Actions workflow tests every change and deploys `main` to the Azure VM.
 
+### 9. Tests ran against stale tables → run all tests after all models
+ 
+By default, Cosmos creates a `run` and a `test` task for every dbt model, and `dbt test --select dim_game` also selects any test that has `dim_game` as one of its parents. The `relationships` test on `fact_game_stats.game_key` therefore ran in `dim_game`'s test task, before `fact_game_stats` had been rebuilt, and failed with `Got 4930 results, configured to fail if != 0`. The DAG now uses `RenderConfig(test_behavior=TestBehavior.AFTER_ALL)`, which builds every model first and then runs all tests together. The trade-off is that a failing test no longer stops downstream models from building.
 ---
 
 ## Troubleshooting & Known Issues
