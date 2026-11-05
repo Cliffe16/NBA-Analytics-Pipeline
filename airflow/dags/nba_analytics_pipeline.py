@@ -32,7 +32,7 @@ profile_config = ProfileConfig(
         conn_id="google_cloud_default",
         profile_args={
             "project": os.getenv("GCP_PROJECT_ID"),
-            "dataset": "STAGING"
+            "dataset": "MART"
             }
         )
 )
