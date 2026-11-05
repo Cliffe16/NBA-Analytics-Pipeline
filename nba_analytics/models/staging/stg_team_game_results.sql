@@ -7,7 +7,7 @@ WITH historical_source AS (
     ) }}
 ),
 source AS (
-    SELECT * FROM {{ historical_source('raw', 'raw_team_game_results') }}
+    SELECT * FROM historical_source
     {% if target.name == 'dev' %}
     WHERE _dbt_source_relation LIKE '%history%'
        OR SAFE.PARSE_DATE('%Y-%m-%d', SUBSTR(GAME_DATE, 1, 10)) >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
