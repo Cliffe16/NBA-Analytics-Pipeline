@@ -52,5 +52,6 @@ jobs:
             git pull origin main
             
             # Restart the scheduler and worker so Cosmos registers the new dbt files
+            sudo docker compose up -d
             sudo docker compose restart airflow-scheduler airflow-webserver
             
