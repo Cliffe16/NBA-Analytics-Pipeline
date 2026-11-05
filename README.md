@@ -77,7 +77,7 @@ Airflow Graph:
  
 ![Airflow graph view: three extraction tasks followed by the Cosmos-generated dbt task group](docs/airflow_dag_graph.png)
  
-*Airflow graph view of a successful run: the three extraction tasks, then the `transform_nba_data` task group, with dbt models as Cosmos tasks (`run`, plus `test` where tests are defined).*
+*Airflow graph view of a successful run: the three extraction tasks, then the `transform_nba_data` task group, with dbt models as Cosmos tasks and the test tasks bundled up in the end.*
 
 ---
  
