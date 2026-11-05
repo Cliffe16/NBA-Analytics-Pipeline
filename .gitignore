@@ -40,3 +40,4 @@ Thumbs.db
 .env
 
 gcp_creds.jsonget-docker.sh
+grafana/provisioning/datasources/

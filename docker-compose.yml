@@ -115,6 +115,22 @@ services:
     networks:
       - airflow-net
 
+grafana:
+    image: grafana/grafana:latest
+    container_name: nba_grafana
+    ports:
+      - "3000:3000"
+    environment:
+      # Automatically install the official BigQuery plugin
+      - GF_INSTALL_PLUGINS=grafana-bigquery-datasource
+      # Allow visitors to view the dashboard without a login screen
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/nba_overview.json
+    volumes:
+      # Mount the Dashboard as Code directory
+      - ./grafana/provisioning:/etc/grafana/provisioning
+
 volumes:
   postgres-db-volume:
 
