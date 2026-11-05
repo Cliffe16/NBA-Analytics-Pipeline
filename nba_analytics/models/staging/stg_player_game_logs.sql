@@ -9,7 +9,8 @@ WITH historical_source AS (
 source AS (
     SELECT * FROM {{ source('raw', 'raw_player_game_logs') }}
     {% if target.name == 'dev' %}
-    WHERE SAFE.PARSE_DATE('%Y-%m-%d', SUBSTR(GAME_DATE, 1, 10)) >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
+    WHERE _dbt_source_relation LIKE '%history%' OR
+        SAFE.PARSE_DATE('%Y-%m-%d', SUBSTR(GAME_DATE, 1, 10)) >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
     {% endif %}
 ),
 -- Convert Uppercase column names to Snake case
