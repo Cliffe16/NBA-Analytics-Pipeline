@@ -334,6 +334,21 @@ The deploy job needs three repository secrets: `AZURE_HOST`, `AZURE_USER` and `A
 
 ---
 
+### 6. Business Intelligence & Dashboard-as-Code (DaC)
+
+**[👉 View the Live Executive NBA Dashboard](http://4.222.186.12:3000)**
+*(Note: Hosted on Azure. Configured for anonymous read-only access—no login required.)*
+
+I built a BI layer using Grafana, deployed via **Dashboard-as-Code (DaC)** for strict version control and zero-touch provisioning.
+
+### Engineering Highlights:
+* **Zero-Touch Provisioning:** When the Docker Compose stack spins up, Grafana automatically installs the BigQuery plugin and mounts the `nba_overview.json` dashboard layout from the repository.
+* **Secretless Authentication:** The BigQuery data source is provisioned via YAML using JWT authentication. The service account private key is injected dynamically, keeping credentials out of the codebase and avoiding local `.json` vulnerabilities.
+* **Dynamic SQL Variables:** The dashboard is not hardcoded to a single timeframe. A SQL-backed variable queries the `dim_game` table on load, aliasing human-readable seasons (e.g., "2026-27") while passing raw API IDs to the underlying BigQuery filters.
+* **KPI Color Mapping:** True Shooting % relies on exact threshold overrides (Base=Red, >0.55=Yellow, >0.60=Green) that evaluate against the raw decimal data before formatting it as a percentage for the viewer.
+
+---
+
 ## Operations: Season Rollover
  
 Completed seasons are archived into the `raw_*_history` tables (`raw_player_game_logs_history`, `raw_team_game_results_history`, `raw_team_rosters_history`); `raw_player_info` has no history table. Archiving is currently a manual procedure:
