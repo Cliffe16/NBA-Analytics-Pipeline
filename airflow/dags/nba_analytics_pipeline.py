@@ -27,7 +27,7 @@ EMAIL = config.ALERT_EMAIL
 # Map the Airflow snowflake connection to dbt
 profile_config = ProfileConfig(
     profile_name="nba_pipeline",
-    target_name="dev",
+    target_name="prod",
     profile_mapping=GoogleCloudServiceAccountFileProfileMapping(
         conn_id="google_cloud_default",
         profile_args={
