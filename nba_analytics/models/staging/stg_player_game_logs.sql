@@ -69,7 +69,7 @@ deduped AS(
 	SELECT *,
 		ROW_NUMBER() OVER(
 			PARTITION BY game_id, player_id
-			ORDER BY game_date DESC
+		ORDER BY loaded_at DESC
 			) AS rn
 	FROM cleaned
 )
