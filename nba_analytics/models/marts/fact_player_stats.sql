@@ -1,11 +1,6 @@
 --Partition by day to reduce bytes scanned and cluster by high-cardinality columns
 {{ config(
     materialized='table',
-    partition_by={
-        "field": "game_date",
-        "data_type": "date",
-        "granularity": "day"
-        },
     cluster_by=["team_key", "player_key"]
 ) }}
 
