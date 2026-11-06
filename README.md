@@ -458,6 +458,10 @@ By default, Cosmos creates a `run` and a `test` task for every dbt model, and `d
     - *Cause:* nothing is listening on port **8000** on the edge node: the service is stopped, or it cannot start. Repeated `status=**203**/**EXEC**` lines in the journal mean `ExecStart` points to a binary that cannot be executed (wrong path to `uv`). A failed Key Vault login at startup can also stop it.
     - *Fix:* on the edge node, run `systemctl status nba-extraction` and `journalctl -u nba-extraction -n **100**`, resolve the cause, then clear the failed task in Airflow.
 
+- **Historical data silently dropped from partitioned tables (BigQuery Sandbox)**
+  - *Symptom:* `fact_player_stats` builds successfully in dbt (scanning the full 11+ MB of historical staging data), but the final table only contains rows from the current season. Past seasons show "No data" in Grafana.
+  - *Cause:* The BigQuery Sandbox enforces a mandatory 60-day table expiration. When a table is partitioned by `game_date`, BigQuery applies this 60-day expiration limit to the *date of the partition itself*, rather than the insertion date. Any historical row older than 60 days is instantly and silently deleted upon insertion.
+  - *Fix:* Remove the `partition_by` block in `fact_player_stats.sql`. Treating the table as a single, unpartitioned block forces BigQuery to apply the 60-day expiration timer starting from the day the dbt run executes, preserving the historical seasons.
 ---
 
 ## Data Dictionary
