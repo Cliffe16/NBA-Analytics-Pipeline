@@ -219,7 +219,7 @@
                         "location": "",
                         "project": "nba-analytics-dev",
                         "rawQuery": true,
-                        "rawSql": "SELECT \n    p.player_name as Player, \n    ROUND(AVG(f.game_score), 1) AS `Average Game Score`,\n    ROUND(SAFE_DIVIDE(SUM(f.points), 2 * (SUM(f.field_goals_attempted) + 0.44 * SUM(f.free_throws_attempted))), 3) AS `True Shooting %`\nFROM `nba-analytics-dev.MART.fact_player_stats` f\nJOIN `nba-analytics-dev.MART.dim_player` p ON f.player_key = p.player_key\nJOIN `nba-analytics-dev.MART.dim_game` g ON f.game_key = g.game_key\nWHERE g.season IN (${season:singlequote})\nGROUP BY p.player_id, p.player_name\nHAVING COUNT(*) >= 5\nORDER BY `Average Game Score` DESC\nLIMIT 10",
+                        "rawSql": "SELECT \n  COALESCE(p.player_name, 'Unknown Player') as Player,\n  ROUND(AVG(f.game_score), 1) AS `Average Game Score`,\n  ROUND(SAFE_DIVIDE(SUM(f.points), 2 * (SUM(f.field_goals_attempted) + 0.44 * SUM(f.free_throws_attempted))), 3) AS `True Shooting %`\nFROM `nba-analytics-dev.MART.fact_player_stats` f\nLEFT JOIN `nba-analytics-dev.MART.dim_player` p ON f.player_key = p.player_key\nJOIN `nba-analytics-dev.MART.dim_game` g ON f.game_key = g.game_key\nWHERE g.season IN (${season:singlequote})\nGROUP BY p.player_id, p.player_name\nHAVING COUNT(*) >= 5\nORDER BY `Average Game Score` DESC\nLIMIT 10",
                         "sql": {
                           "columns": [
                             {
@@ -394,7 +394,7 @@
                         "location": "",
                         "project": "nba-analytics-dev",
                         "rawQuery": true,
-                        "rawSql": "SELECT \n    p.player_name as Player, \n    ROUND(AVG(CASE WHEN g.is_win THEN f.game_score END), 1) as win_game_score,\n    ROUND(AVG(CASE WHEN NOT g.is_win THEN f.game_score END), 1) as loss_game_score\nFROM `nba-analytics-dev.MART.fact_player_stats` f\nJOIN `nba-analytics-dev.MART.dim_player` p ON f.player_key = p.player_key\nJOIN `nba-analytics-dev.MART.fact_game_stats` g ON f.game_key = g.game_key AND f.team_key = g.team_key\nJOIN `nba-analytics-dev.MART.dim_game` dg ON f.game_key = dg.game_key\nWHERE dg.season IN (${season:singlequote})\nGROUP BY p.player_id, p.player_name\nORDER BY win_game_score DESC\nLIMIT 10",
+                        "rawSql": "SELECT \n  COALESCE(p.player_name, 'Unknown Player') as Player,\n  ROUND(AVG(CASE WHEN g.is_win THEN f.game_score END), 1) as win_game_score,\n  ROUND(AVG(CASE WHEN NOT g.is_win THEN f.game_score END), 1) as loss_game_score\nFROM `nba-analytics-dev.MART.fact_player_stats` f\nLEFT JOIN `nba-analytics-dev.MART.dim_player` p ON f.player_key = p.player_key\nJOIN `nba-analytics-dev.MART.fact_game_stats` g ON f.game_key = g.game_key AND f.team_key = g.team_key\nJOIN `nba-analytics-dev.MART.dim_game` dg ON f.game_key = dg.game_key\nWHERE dg.season IN (${season:singlequote})\nGROUP BY p.player_id, p.player_name\nORDER BY win_game_score DESC\nLIMIT 10",
                         "sql": {
                           "columns": [
                             {
@@ -622,7 +622,7 @@
                     },
                     "showPoints": "auto",
                     "showValues": false,
-                    "spanNulls": false,
+                    "spanNulls": true,
                     "stacking": {
                       "group": "A",
                       "mode": "none"
@@ -702,6 +702,66 @@
                         "id": "color",
                         "value": {
                           "fixedColor": "#0064ff",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Brooklyn Nets"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "#ffe66a",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "San Antonio Spurs"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "#cfad21",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Washington Wizards"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "#b24700",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Indiana Pacers"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "#e7a464",
                           "mode": "fixed"
                         }
                       }
@@ -933,10 +993,10 @@
         "1d"
       ],
       "fiscalYearStartMonth": 0,
-      "from": "now-7d",
+      "from": "2025-10-21T00:00:00.000Z",
       "hideTimepicker": false,
       "timezone": "browser",
-      "to": "now"
+      "to": "2026-04-12T00:00:00.000Z"
     },
     "title": "NBA Overview",
     "variables": [
