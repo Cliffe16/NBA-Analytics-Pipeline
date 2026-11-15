@@ -126,6 +126,7 @@ services:
       # Allow visitors to view the dashboard without a login screen
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+      - GF_AUTH_ANONYMOUS_ORG_NAME=Main Org
       - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/nba_overview.json
     volumes:
       # Mount the Dashboard as Code directory
