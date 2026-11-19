@@ -1,8 +1,8 @@
 # NBA Analytics Data Pipeline
 
-[![CI](https://github.com/Cliffe16/NBA-Analytics-Pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/Cliffe16/NBA-Analytics-Pipeline/actions/workflows/ci.yml) ![Python](https://img.shields.io/badge/python-3.12-blue) ![License](https://img.shields.io/badge/license-**MIT**-green) ![dbt](https://img.shields.io/badge/dbt-1.8.7-FF694B?logo=dbt&logoColor=white) ![Airflow](https://img.shields.io/badge/Airflow-2.10.0-017CEE?logo=apacheairflow&logoColor=white) ![Astronomer Cosmos](https://img.shields.io/badge/Astronomer_Cosmos-0F4DB5?logo=astronomer&logoColor=white) ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white) ![Azure](https://img.shields.io/badge/Azure-0078D4?logo=microsoftazure&logoColor=white) ![BigQuery](https://img.shields.io/badge/BigQuery-669DF6?logo=googlebigquery&logoColor=white) ![Tailscale](https://img.shields.io/badge/Tailscale-242424?logo=tailscale&logoColor=white) ![uv](https://img.shields.io/badge/uv-DE5FE9?logo=uv&logoColor=white) ![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white) ![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white) ![Grafana](https://img.shields.io/badge/Grafana-F46800?logo=grafana&logoColor=white)     
+[![CI](https://github.com/Cliffe16/NBA-Analytics-Pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/Cliffe16/NBA-Analytics-Pipeline/actions/workflows/ci.yml) ![Python](https://img.shields.io/badge/python-3.12-blue) ![License](https://img.shields.io/badge/license-MIT-green) ![dbt](https://img.shields.io/badge/dbt-1.8.7-FF694B?logo=dbt&logoColor=white) ![Airflow](https://img.shields.io/badge/Airflow-2.10.0-017CEE?logo=apacheairflow&logoColor=white) ![Astronomer Cosmos](https://img.shields.io/badge/Astronomer_Cosmos-0F4DB5?logo=astronomer&logoColor=white) ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white) ![Azure](https://img.shields.io/badge/Azure-0078D4?logo=microsoftazure&logoColor=white) ![BigQuery](https://img.shields.io/badge/BigQuery-669DF6?logo=googlebigquery&logoColor=white) ![Tailscale](https://img.shields.io/badge/Tailscale-242424?logo=tailscale&logoColor=white) ![uv](https://img.shields.io/badge/uv-DE5FE9?logo=uv&logoColor=white) ![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white) ![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white) ![Grafana](https://img.shields.io/badge/Grafana-F46800?logo=grafana&logoColor=white)     
 
-An automated **ELT** pipeline that extracts player, roster and game statistics from the **NBA** stats **API** (`stats.nba.com`), loads the raw data into **Google BigQuery**, and transforms it into a dimensional model and **MetricFlow** semantic layer for analytics.
+An automated **ELT** pipeline that extracts player, roster and game statistics from the NBA stats API (`stats.nba.com`), loads the raw data into Google BigQuery, and transforms it into a dimensional model and MetricFlow semantic layer for analytics.
 
 **Contents:** [Overview](#overview) · [Architecture](#architecture) · [Data model](#data-model) · [Tech stack](#tech-stack) · [Repository structure](#repository-structure) · [Execution flow](#pipeline-execution-flow) · [Setup](#setup--installation) · [Season rollover](#operations-season-rollover) · [Design decisions](#design-decisions--challenges) · [Troubleshooting](#troubleshooting--known-issues) · [Data dictionary](#data-dictionary) · [Limitations](#limitations) · [License](#license)
 
@@ -34,7 +34,8 @@ Build an analytics platform that tracks NBA player and team performance across t
 - **Schema-drift tolerant staging** using `dbt_utils.union_relations`.
 - **Dimensional model** with **SCD** Type 2 player history and a MetricFlow semantic layer.
 - **Grafana dashboard, provisioned as code,** on the marts: league averages, home vs. away wins, efficiency leaders, rolling point differential, and Game Score in wins vs. losses.
-- **Secrets handled in memory** via Azure Key Vault; **CI/CD** with GitHub Actions, `uv` and `pytest`.
+- **Secrets handled in memory** via Azure Key Vault 
+- **CI/CD** with GitHub Actions, `uv` and `pytest`.
 
 **v1 → v2:** v1 was a synchronous pipeline on Snowflake. v2 migrated to BigQuery and was re-architected for reliability and cost. See [Design decisions & challenges](#design-decisions--challenges).
 
@@ -255,9 +256,9 @@ NBA-Analytics-Pipeline/
 
 ## Pipeline Execution Flow
 
-1. **Scheduled trigger:** Airflow, running on the Azure VM, triggers the `nba_analytics_pipeline` **DAG** daily (`@daily`, which is 00:00 **UTC** or 03:00 **EAT**).
+1. **Scheduled trigger:** Airflow, running on the Azure VM, triggers the `nba_analytics_pipeline` DAG daily (`@daily`, which is 00:00 **UTC** or 03:00 **EAT**).
 
-2. **Remote trigger:** Airflow uses a `PythonOperator` and `HttpHook` to send an **HTTP** `**POST**` across the Tailscale private network to the local FastAPI worker. FastAPI registers a **UUID** `task_id` as `pending` in SQLite, dispatches the extraction in a background task via `BackgroundTasks`, and immediately returns `**HTTP** **202** Accepted`. 
+2. **Remote trigger:** Airflow uses a `PythonOperator` and `HttpHook` to send an **HTTP** `POST` across the Tailscale private network to the local FastAPI worker. FastAPI registers a **UUID** `task_id` as `pending` in SQLite, dispatches the extraction in a background task via `BackgroundTasks`, and immediately returns `HTTP 202 Accepted`. 
 If an extraction of the same type is already `pending` or `running`, the worker returns that task's ID instead of starting a second run.
 
 3. **Extraction:** The local Ubuntu worker retrieves BigQuery service account credentials from Azure Key Vault and initializes the BigQuery client in memory. Because outbound requests to the API originate from a residential ISP, the Akamai WAF permits the connection. 
@@ -266,12 +267,12 @@ The three extraction tasks run in sequence, because `extract_player_info` builds
     - `team_rosters.py`: one `CommonTeamRoster` call per team with a 0.6 s delay between calls, plus a `SNAPSHOT_DATE` column.
     - `player_info.py`: delta extraction. It queries BigQuery for players in the roster and game-log tables that are not yet in `raw_player_info`, then calls `CommonPlayerInfo` for each one (1.5 s delay, up to 3 attempts per player). A player that fails all 3 attempts is skipped and retried on the next run, because it is still missing from `raw_player_info`. 5 failures in a row abort the task, since that means the API is blocking requests. Results are saved even when the task aborts.
 
-4. **Direct BigQuery load:** The worker turns each JSON response into a Pandas DataFrame and loads it into the `raw_*` tables of the `**STAGING**` dataset with `WRITE_TRUNCATE` so repeated runs do not accumulate duplicate season-to-date rows. 
+4. **Direct BigQuery load:** The worker turns each JSON response into a Pandas DataFrame and loads it into the `raw_*` tables of the `STAGING` dataset with `WRITE_TRUNCATE` so repeated runs do not accumulate duplicate season-to-date rows. 
 The exception is `raw_player_info`, which is appended to (`WRITE_APPEND`) because only players not yet loaded are fetched. 
 Every load adds a `LOADED_AT` UTC timestamp so staging models can deduplicate on the real load time (for example, `stg_player_info` keeps the latest row per player). 
 Completed seasons are kept in `raw_*_history` tables (see [Season rollover](#operations-season-rollover)).
 
-5. **Status polling:** Airflow polls `**GET** /status/{task_id}` every 10 seconds over Tailscale until the SQLite state becomes `success`, or raises an `AirflowException` on `failed`. 
+5. **Status polling:** Airflow polls `GET /status/{task_id}` every 10 seconds over Tailscale until the SQLite state becomes `success`, or raises an `AirflowException` on `failed`. 
 Each extraction task has a 2-hour `execution_timeout`. When the worker starts, it marks any `pending` or `running` task left over from a crash as `failed: worker restarted`, so Airflow retries instead of polling a dead task.
 
 6. **Transformation:** Once all three extraction tasks succeed, Airflow starts the `transform_nba_data` `DbtTaskGroup`. Astronomer Cosmos compiles and runs the dbt models inside BigQuery, then runs all data tests together once every model has been built (`TestBehavior.AFTER_ALL`). The `stg_*` views union the history and daily tables, and the mart tables are built as partitioned, clustered dimensional models ready for BI consumption.
@@ -292,7 +293,7 @@ Each extraction task has a 2-hour `execution_timeout`. When the worker starts, i
 
 The Airflow environment is containerized. To start it for the first time:
 
-```bash git clone [https://github.com/Cliffe16/**NBA**-Analytics-Pipeline.git](https://github.com/Cliffe16/**NBA**-Analytics-Pipeline.git) cd **NBA**-Analytics-Pipeline sudo docker compose up -d ```
+```bash git clone [https://github.com/Cliffe16/NBA-Analytics-Pipeline.git](https://github.com/Cliffe16/NBA-Analytics-Pipeline.git) cd NBA-Analytics-Pipeline sudo docker compose up -d ```
 
 ### 2. Airflow connections
 
@@ -315,15 +316,15 @@ Install Tailscale and join the mesh network, then install dependencies:
 Run the FastAPI worker as an always-on `systemd` service (`sudo nano /etc/systemd/system/nba-extraction.service`):
 
 ```ini 
-[Unit] Description=**NBA** Local Extraction **API** (Tailscale Connection) After=network.target
+[Unit] Description=NBA Local Extraction API (Tailscale Connection) After=network.target
 
-[Service] User=<user> WorkingDirectory=/path/to/**NBA**-Analytics-Pipeline ExecStart=/path/to/uv run uvicorn api:app --host 0.0.0.0 --port **8000** Restart=always RestartSec=3
+[Service] User=<user> WorkingDirectory=/path/to/NBA-Analytics-Pipeline ExecStart=/path/to/uv run uvicorn api:app --host 0.0.0.0 --port 8000 Restart=always RestartSec=3
 
 [Install] WantedBy=multi-user.target 
 
 ```
 
-Set `ExecStart` to the absolute path printed by `command -v uv`. If the path is wrong, systemd fails with `status=**203**/**EXEC**` and keeps restarting the unit.
+Set `ExecStart` to the absolute path printed by `command -v uv`. If the path is wrong, systemd fails with `status=203/EXEC` and keeps restarting the unit.
 
 Enable and start it:
 
@@ -340,7 +341,7 @@ Enable and start it:
 | `STAGING-DATASET` | `STAGING_DATASET` | Dataset holding the `raw_*` tables and `stg_*` views |
 | `ALERT-EMAIL` | `ALERT_EMAIL` | Address for Airflow failure emails (unused unless SMTP is configured) |
 
-Set `VAULT_URL` in `extraction/config.py` to your own vault. Other settings live in the same file: `**SEASON**`, `SEASON_TYPE` (`Regular Season`), `LEAGUE_ID` and `API_DELAY`. 
+Set `VAULT_URL` in `extraction/config.py` to your own vault. Other settings live in the same file: `SEASON`, `SEASON_TYPE` (`Regular Season`), `LEAGUE_ID` and `API_DELAY`. 
 Without a service account JSON, the BigQuery client falls back to Application Default Credentials.
 
 `DefaultAzureCredential` authenticates the worker to Key Vault: either set `AZURE_CLIENT_ID`, `AZURE_TENANT_ID` and `AZURE_CLIENT_SECRET` for a service principal, or run the worker as a user with a valid `az login` session. 
@@ -351,7 +352,7 @@ Secrets are read when the worker starts, so if the credential is missing or expi
 Deployments are automated by GitHub Actions (`.github/workflows/ci.yml`):
 
 - Every push or pull request to `main` installs `uv`, sets up Python 3.12, syncs dependencies (`uv sync`) and runs the unit tests (`uv run pytest test/ -v`).
-- On a push to `main`, if the tests pass, the project is deployed to the Azure VM over **SSH** and the Airflow containers are restarted.
+- On a push to `main`, if the tests pass, the project is deployed to the Azure VM over SSH and the Airflow containers are restarted.
 
 The deploy job needs three repository secrets: `AZURE_HOST`, `AZURE_USER` and `AZURE_SSH_KEY` (the contents of the VM's `.pem` private key).
 
@@ -367,7 +368,7 @@ I built a BI layer using Grafana on the `MART` model, deployed via **Dashboard-a
 - When the Docker Compose stack starts on the Azure VM, Grafana installs the BigQuery plugin, provisions the data source from YAML and loads the dashboard, so there is no manual setup in the UI.
 - Grafana and Airflow are reached over Tailscale, and the Azure network security group blocks inbound HTTP from the internet.
 
-**[View the Live Executive NBA Dashboard](http://http://100.96.130.48:3000)**
+**[View the Live NBA Dashboard](https://nba-fastapi-vm.tailc63d64.ts.net)**
 
 ---
 
@@ -388,19 +389,19 @@ Run the archive once per season: because it uses `WRITE_APPEND`, repeating it du
 
 ### 1. NBA API blocks cloud IPs → hybrid cloud-to-edge extraction
 
-`stats.nba.com` sits behind an Akamai Web Application Firewall that blocks traffic from major cloud data-center IP ranges. Extraction scripts hosted in the cloud fail with `**HTTP** **403** Forbidden` or time out.
+`stats.nba.com` sits behind an Akamai Web Application Firewall that blocks traffic from major cloud data-center IP ranges. Extraction scripts hosted in the cloud fail with `HTTP 403 Forbidden` or time out.
 
 - **Orchestration** runs in the cloud: Apache Airflow on an Azure VM.
 - **Extraction** runs on a local Ubuntu machine behind a residential ISP, so requests to the API come from an IP range the WAF accepts.
-- **Communication** between Airflow and the worker goes over a Tailscale (WireGuard) mesh **VPN**: encrypted, **NAT**-traversing, and with no ports exposed to the public internet.
+- **Communication** between Airflow and the worker goes over a Tailscale (WireGuard) mesh VPN: encrypted, NAT-traversing, and with no ports exposed to the public internet.
 
 ### 2. Synchronous HTTP timeouts → asynchronous trigger-and-poll
 
-In v1, synchronous **HTTP** calls timed out during long, rate-limited **API** extractions. v2 replaces `SimpleHttpOperator` with a trigger-and-poll pattern:
+In v1, synchronous HTTP calls timed out during long, rate-limited API extractions. v2 replaces `SimpleHttpOperator` with a trigger-and-poll pattern:
 
-- `api.py` returns `**HTTP** **202** Accepted` with a `task_id` and runs the extraction via FastAPI `BackgroundTasks`.
+- `api.py` returns `HTTP 202 Accepted` with a `task_id` and runs the extraction via FastAPI `BackgroundTasks`.
 - Task state is persisted in SQLite (`extraction_tasks.db`).
-- Airflow polls `**GET** /status/{task_id}` with `HttpHook` until the task succeeds or fails.
+- Airflow polls `GET /status/{task_id}` with `HttpHook` until the task succeeds or fails.
 - A repeated trigger for a task type that is already running gets the existing `task_id` back, so an Airflow retry never starts two concurrent extractions.
 - On startup the worker fails any task left `pending` or `running` by a crash, and each extraction task has a 2-hour `execution_timeout`, so a crash cannot leave Airflow polling forever.
 
@@ -414,11 +415,11 @@ In v1, daily `WRITE_APPEND` loads duplicated the full season-to-date payload eve
 - Makes intermediate dbt models `ephemeral`, so no extra intermediate tables are stored or maintained.
 - In the `dev` target, `stg_player_game_logs` and `stg_team_game_results` keep the history tables but limit the current-season table to the last 7 days, which keeps development runs small. The `prod` target is unfiltered.
 
-A BigQuery dry run of `SELECT *` on `fact_player_stats` filtered to a single `game_date` reports 71.91 KB processed, against 352.98 KB for the full table (about 80% less). At this volume the absolute saving is small, so the partitioning demonstrates the pattern rather than being required.
+A BigQuery dry run of `SELECT` on `fact_player_stats` filtered to a single `game_date` reports 71.91 KB processed, against 352.98 KB for the full table (about 80% less). At this volume the absolute saving is small, so the partitioning demonstrates the pattern rather than being required.
 
 ### 4. API column changes → automated schema-drift handling
 
-`dbt_utils.union_relations` in `stg_team_rosters.sql` inspects `INFORMATION_SCHEMA` and aligns mismatched columns between historical (17 columns) and active-season (18 columns) payloads, replacing a static `**SELECT** *` / `**UNION** **ALL**`.
+`dbt_utils.union_relations` in `stg_team_rosters.sql` inspects `INFORMATION_SCHEMA` and aligns mismatched columns between historical (17 columns) and active-season (18 columns) payloads, replacing a static `SELECT *` / `UNION ALL`.
 
 ### 5. Plaintext credentials → in-memory secrets from Azure Key Vault
 
@@ -426,11 +427,11 @@ The worker pulls the GCP service account JSON from Azure Key Vault (`DefaultAzur
 
 ### 6. Flaky API responses → stateful extraction and graceful degradation
 
-`player_info.py` only fetches players that are not yet in `raw_player_info`, retries each request up to 3 times, and skips a player after the third failure. It is picked up again on the next run. Five failures in a row abort the task as an **API** block. In every case the players fetched so far are appended to BigQuery in a `finally` block before exiting.
+`player_info.py` only fetches players that are not yet in `raw_player_info`, retries each request up to 3 times, and skips a player after the third failure. It is picked up again on the next run. Five failures in a row abort the task as an API block. In every case the players fetched so far are appended to BigQuery in a `finally` block before exiting.
 
 ### 7. Dimensional modeling and a semantic layer
 
-SCD Type 2 player team history is built with window functions (`**LAG**`, `**LEAD**`) over `stg_player_game_logs`, so a new version starts on the date of a player's first game for a new team. Roster snapshots only supply `position` and `jersey_number`, and cover players who have not played yet. A MetricFlow semantic layer (`semantic_models.yml`, `metrics.yml`) exposes standardized metrics for BI.
+SCD Type 2 player team history is built with window functions (`LAG`, `LEAD`) over `stg_player_game_logs`, so a new version starts on the date of a player's first game for a new team. Roster snapshots only supply `position` and `jersey_number`, and cover players who have not played yet. A MetricFlow semantic layer (`semantic_models.yml`, `metrics.yml`) exposes standardized metrics for BI.
 
 ### 8. Orchestration and delivery
 
@@ -444,9 +445,9 @@ By default, Cosmos creates a `run` and a `test` task for every dbt model, and `d
 
 ## Troubleshooting & Known Issues
 
-- **Azure VM memory pressure and `**SIGTERM**` task failures**
-    - *Symptom:* concurrent dbt compilation and task execution pushed VM memory to 75–90%, killing tasks with `**SIGTERM**`.
-    - *Fix:* use `LocalExecutor` with `AIRFLOW__CORE__PARALLELISM: '2'` and `AIRFLOW__CORE__MAX_ACTIVE_TASKS_PER_DAG: '2'` in `docker-compose.yml`, plus `max_active_runs=1` in the **DAG** definition.
+- **Azure VM memory pressure and `SIGTERM` task failures**
+    - *Symptom:* concurrent dbt compilation and task execution pushed VM memory to 75–90%, killing tasks with `SIGTERM`.
+    - *Fix:* use `LocalExecutor` with `AIRFLOW__CORE__PARALLELISM: '2'` and `AIRFLOW__CORE__MAX_ACTIVE_TASKS_PER_DAG: '2'` in `docker-compose.yml`, plus `max_active_runs=1` in the DAG definition.
 
 - **`game_logs` fails with `Remote end closed connection without response`**
   - *Symptom:* the worker log shows `Connection aborted` / `RemoteDisconnected` a few milliseconds after `Extracting Player Stats...`, and the task is marked failed.
@@ -454,9 +455,9 @@ By default, Cosmos creates a `run` and a `test` task for every dbt model, and `d
   - *Fix:* none needed in most cases. Airflow retries the task 10 minutes later and the next attempt normally succeeds.
 
 - **Extraction task fails with `Connection refused` to the worker**
-    - *Symptom:* the Airflow log shows `HTTPConnectionPool(host='<tailscale-ip>', port=**8000**): Max retries exceeded ... [Errno **111**] Connection refused` for `/extract/<endpoint>`. Once the retries are used up, the task fails and everything downstream is marked `upstream_failed`.
-    - *Cause:* nothing is listening on port **8000** on the edge node: the service is stopped, or it cannot start. Repeated `status=**203**/**EXEC**` lines in the journal mean `ExecStart` points to a binary that cannot be executed (wrong path to `uv`). A failed Key Vault login at startup can also stop it.
-    - *Fix:* on the edge node, run `systemctl status nba-extraction` and `journalctl -u nba-extraction -n **100**`, resolve the cause, then clear the failed task in Airflow.
+    - *Symptom:* the Airflow log shows `HTTPConnectionPool(host='<tailscale-ip>', port=8000): Max retries exceeded ... [Errno 111] Connection refused` for `/extract/<endpoint>`. Once the retries are used up, the task fails and everything downstream is marked `upstream_failed`.
+    - *Cause:* nothing is listening on port 8000 on the edge node: the service is stopped, or it cannot start. Repeated `status=203/EXEC` lines in the journal mean `ExecStart` points to a binary that cannot be executed (wrong path to `uv`). A failed Key Vault login at startup can also stop it.
+    - *Fix:* on the edge node, run `systemctl status nba-extraction` and `journalctl -u nba-extraction -n 100`, resolve the cause, then clear the failed task in Airflow.
 
 - **Historical data silently dropped from partitioned tables (BigQuery Sandbox)**
   - *Symptom:* `fact_player_stats` builds successfully in dbt (scanning the full 11+ MB of historical staging data), but the final table only contains rows from the current season. Past seasons show "No data" in Grafana.
@@ -466,7 +467,7 @@ By default, Cosmos creates a `run` and a `test` task for every dbt model, and `d
 
 ## Data Dictionary
 
-The `**MART**` dataset in BigQuery exposes these models for BI and downstream analytics.
+The `MART` dataset in BigQuery exposes these models for BI and downstream analytics.
 
 | Model | Grain | Keys | Notable columns |
 |---|---|---|---|
@@ -484,8 +485,8 @@ Extraction is currently configured for `Regular Season` only (`SEASON_TYPE` in `
 
 ### Metric definitions
 
-- **True Shooting %:** `**PTS** / (2 × (**FGA** + 0.44 × **FTA**))`
-- **Game Score (Hollinger):** `**PTS** + 0.4×**FGM** − 0.7×**FGA** − 0.4×(**FTA** − **FTM**) + 0.7×**OREB** + 0.3×**DREB** + **STL** + 0.7×**AST** + 0.7×**BLK** − 0.4×PF − **TOV**`
+- **True Shooting %:** `PTS / (2 × (FGA + 0.44 × FTA))`
+- **Game Score (Hollinger):** `PTS + 0.4×FGM − 0.7×FGA − 0.4×(FTA − FTM) + 0.7×OREB + 0.3×DREB + STL + 0.7×AST + 0.7×BLK − 0.4×PF − TOV`
 
 ### Data quality
 
@@ -504,7 +505,7 @@ Singular and generic dbt tests in `nba_analytics/tests/` cover data freshness, p
 - **Scope:** built as a portfolio and learning project rather than a hardened production service.
 
 
-**Disclaimer:** this project is for educational purposes and is not affiliated with or endorsed by the NBA. Review the **NBA**'s terms of use before reusing the data.
+**Disclaimer:** this project is for educational purposes and is not affiliated with or endorsed by the NBA. Review the NBA's terms of use before reusing the data.
 
 ---
 
